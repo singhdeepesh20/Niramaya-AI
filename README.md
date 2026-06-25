@@ -8,3 +8,14 @@
 
 <br>
 
+<img src="https://img.shields.io/badge/Healthcare-AI-blue?style=for-the-badge&logo=openai"/>
+<img src="https://img.shields.io/badge/FastAPI-Backend-green?style=for-the-badge&logo=fastapi"/>
+<img src="https://img.shields.io/badge/RAG-Powered-orange?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/LLM-Medical%20Intelligence-purple?style=for-the-badge"/>
+<img src="https://img.shields.io/badge/Production-Ready-success?style=for-the-badge"/>
+
+<br><br>
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:00C9FF,100:92FE9D&height=200&section=header&text=Niramaya-AI&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=35"/>
+
+</div>

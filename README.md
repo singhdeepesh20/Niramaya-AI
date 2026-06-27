@@ -19,3 +19,9 @@
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:00C9FF,100:92FE9D&height=200&section=header&text=Niramaya-AI&fontSize=50&fontColor=ffffff&animation=fadeIn&fontAlignY=35"/>
 
 </div>
+
+---
+
+# 🚀 What is Niramaya-AI?
+
+Niramaya AI transforms scattered healthcare documents into a searchable, AI-powered health record.

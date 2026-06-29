@@ -24,4 +24,4 @@
 
 #  What is Niramaya-AI?
 
-Niramaya AI transforms scattered healthcare documents into a searchable, AI-powered health record. rag
+Niramaya AI transforms scattered healthcare documents into a searchable, AI-powered health record. rag system used 

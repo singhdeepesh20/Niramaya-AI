@@ -24,4 +24,5 @@
 
 #  What is Niramaya-AI?
 
-Niramaya AI transforms scattered healthcare documents into a searchable, AI-powered health record. rag system used for searching
+**Niramaya AI** is an AI-powered assistant that ingests a person's medical documents - lab reports, prescriptions, discharge summaries, scan reports, health checkup PDFs - regardless of format or source, and turns them into a single, queryable health record.
+

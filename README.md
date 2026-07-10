@@ -41,3 +41,4 @@ Instead of opening files, the user just asks a question in natural language, and
 | Risk of an AI system confidently guessing about health data | A dedicated safety layer that says "I don't have enough information" instead of guessing, and never gives medical advice |
 | Trusting an AI-generated answer about your own health | Every answer cites the exact source report it came from - nothing is a black box |
 
+# How It Works - In Depth, Explained Simply

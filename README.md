@@ -32,4 +32,12 @@ Instead of opening files, the user just asks a question in natural language, and
 
 # The Solution - How Niramaya AI Solves Each Problem
 
+| Problem | How Niramaya AI Solves It |
+| --- | --- |
+| Records scattered across hospitals, labs, PDFs, WhatsApp, email | One place to upload everything, regardless of source or original format |
+| Manually reading years of reports to answer a simple question | Natural-language Q&A - ask once, get a grounded answer in seconds |
+| No way to see a trend across many separate documents | Structured extraction of numeric values (like blood sugar) lets the system chart trends across every report at once |
+| Keyword search can't understand meaning | Semantic search (embeddings + vector search) finds relevant information even when the exact words don't match |
+| Risk of an AI system confidently guessing about health data | A dedicated safety layer that says "I don't have enough information" instead of guessing, and never gives medical advice |
+| Trusting an AI-generated answer about your own health | Every answer cites the exact source report it came from - nothing is a black box |
 

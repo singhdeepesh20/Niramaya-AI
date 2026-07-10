@@ -30,3 +30,6 @@ Instead of opening files, the user just asks a question in natural language, and
 
 **What it is not, deliberately:** it is not a diagnostic tool. It does not tell someone what's wrong with them or what to do about it. It organizes and explains their own data back to them - the actual medical decisions stay exactly where they belong, with a doctor.
 
+# The Solution - How Niramaya AI Solves Each Problem
+
+

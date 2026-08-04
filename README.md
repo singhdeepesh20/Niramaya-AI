@@ -22,7 +22,7 @@
 
 ---
 
-#  What is Niramaya-AI?
+###  What is Niramaya-AI?
 
 **Niramaya AI** is an AI-powered assistant that ingests a person's medical documents - lab reports, prescriptions, discharge summaries, scan reports, health checkup PDFs - regardless of format or source, and turns them into a single, queryable health record.
 

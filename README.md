@@ -1,6 +1,6 @@
 Niramaya AI is an AI-powered platform that transforms scattered medical reports into a searchable, intelligent health record.
 
 
-it will continue soon
+it will continue soon...
 
 

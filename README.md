@@ -1,6 +1,4 @@
 # Niramaya AI
 
 
-### working soon...
-
 

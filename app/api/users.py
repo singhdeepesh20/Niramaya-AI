@@ -36,3 +36,13 @@ async def create_user(payload: UserCreate, db: AsyncSession = Depends(get_db)) -
     return user
 
 
+@router.get("/{user_id}", response_model=UserResponse)
+async def get_user(user_id: int, db: AsyncSession = Depends(get_db)) -> User:
+    try:
+        result = await db.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+    except SQLAlchemyError as exc:
+        raise HTTPException(status_code=500, detail="Database operation failed") from exc
+    if user is None:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user

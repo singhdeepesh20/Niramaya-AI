@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f6f7f3" />
+    <title>Niramaya-AI · Backend starter</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="/static/app.js" defer></script>
+  </head>
+  <body>
+    <main class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="Niramaya-AI home">
+          <span class="brand-mark" aria-hidden="true">N</span>
+          <span>Niramaya<span class="brand-light">-AI</span></span>
+        </a>
+        <a class="docs-link" href="/docs" target="_blank" rel="noreferrer">API docs <span aria-hidden="true">↗</span></a>
+      </header>
+
+      <section class="intro">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> BACKEND STARTER</p>
+        <h1>A healthy start<br />for better care.</h1>
+        <p class="intro-copy">A simple interface for trying your FastAPI and PostgreSQL user endpoints.</p>
+      </section>
+
+      <section class="workspace" aria-label="Backend tools">
+        <aside class="status-card">
+          <div class="card-heading">
+            <div>
+              <p class="section-kicker">SYSTEM STATUS</p>
+              <h2>Connection check</h2>
+            </div>
+            <span class="status-icon" aria-hidden="true">⌁</span>
+          </div>
+          <p class="muted">Check whether this app can reach its PostgreSQL database.</p>
+          <div class="health-result" id="health-result" role="status" aria-live="polite">
+            <span class="health-indicator" id="health-indicator"></span>
+            <span id="health-text">Checking connection…</span>
+          </div>
+          <button class="button button-secondary" id="health-button" type="button">Check again <span aria-hidden="true">↻</span></button>
+          <p class="helper">The API health endpoint checks the database connection.</p>
+        </aside>
+
+        <div class="forms-column">
+          <section class="form-card" aria-labelledby="create-title">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">CREATE</p>
+                <h2 id="create-title">Add a user</h2>
+              </div>
+              <span class="step-number">01</span>
+            </div>
+            <form id="create-form">
+              <label for="name">Full name</label>
+              <input id="name" name="name" type="text" placeholder="e.g. Deepesh Singh" maxlength="120" required />
+              <label for="email">Email address</label>
+              <input id="email" name="email" type="email" placeholder="you@example.com" maxlength="320" required />
+              <button class="button button-primary" type="submit">Create user <span aria-hidden="true">→</span></button>
+            </form>
+            <div class="message" id="create-message" role="status" aria-live="polite" hidden></div>
+          </section>
+
+          <section class="form-card lookup-card" aria-labelledby="lookup-title">
+            <div class="card-heading">
+              <div>
+                <p class="section-kicker">LOOK UP</p>
+                <h2 id="lookup-title">Find a user</h2>
+              </div>
+              <span class="step-number">02</span>
+            </div>
+            <form class="lookup-form" id="lookup-form">
+              <div class="lookup-field">
+                <label for="user-id">User ID</label>
+                <input id="user-id" name="user_id" type="number" min="1" placeholder="Enter an ID" required />
+              </div>
+              <button class="button button-primary" type="submit">Search <span aria-hidden="true">→</span></button>
+            </form>
+            <div class="message" id="lookup-message" role="status" aria-live="polite" hidden></div>
+            <article class="user-result" id="user-result" hidden></article>
+          </section>
+        </div>
+      </section>
+
+      <footer><span>Built for learning, ready to grow.</span><span>FastAPI <i>·</i> SQLAlchemy <i>·</i> PostgreSQL</span></footer>
+    </main>
+  </body>
+</html>

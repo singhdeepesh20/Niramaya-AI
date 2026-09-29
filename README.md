@@ -149,3 +149,25 @@ This codebase is a local development foundation, not a deployment-ready healthca
 - Configure HTTPS, restricted database access, managed secrets, logging, backups, and operational monitoring before any deployment.
 
 Database exceptions are translated into generic HTTP errors so the API response does not expose connection strings or internal SQL details. Production logging and alerting still need to be configured for operators to diagnose failures safely.
+
+## AI roadmap
+
+The repository name describes the intended direction; AI capabilities are **not implemented yet**. Any future AI work should be added as a separate, reviewable service boundary rather than running model inference inside the HTTP route handlers.
+
+Potential milestones:
+
+1. Add authentication, authorization, consent, and audit events before storing sensitive records.
+2. Design a data model and document-ingestion workflow with validation, access controls, and retention rules.
+3. Add an independently deployable model or inference adapter with explicit input/output schemas and timeouts.
+4. Evaluate model quality, privacy, bias, and failure behavior on representative, approved data before release.
+5. Add monitoring, versioned prompts/models, human review, and clear user-facing limits for any health-related output.
+
+Any future clinical-facing feature would require appropriate domain, privacy, security, and regulatory review. It must not be presented as a diagnostic or treatment tool without that work.
+
+## Contributing
+
+Keep pull requests focused, describe the behavior being changed, and update this README when setup steps or API behavior change. Never include secrets, real personal data, or unapproved clinical data in commits, logs, or examples.
+
+## License
+
+This project is distributed under the MIT License. See [`LICENSE`](LICENSE).

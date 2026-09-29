@@ -136,3 +136,16 @@ curl http://127.0.0.1:8000/users/1
 An unknown ID returns `404 Not Found`. Invalid request data returns `422 Unprocessable Entity`. Unexpected database failures return a generic error response; internal SQL and credentials are not included in API error messages. If PostgreSQL is unavailable, `GET /health` returns `503 Service Unavailable`.
 
 The browser UI at `/` offers the same health, create, and lookup workflows. It calls these same-origin endpoints, so a separate frontend development server and CORS configuration are not required.
+
+## Security and deployment status
+
+This codebase is a local development foundation, not a deployment-ready healthcare service.
+
+- **Authentication and authorization are not implemented.** The user endpoints are currently public to anyone who can reach the app. Do not expose them to the internet as-is.
+- **The user model is only a demonstration.** It stores a name and email; it is not a patient model and has no consent, access-control, or audit trail.
+- **Do not use real patient or other sensitive personal data** with this prototype.
+- Keep real credentials in a local or deployment secret store. `.env` is ignored by Git; `.env.example` contains only a placeholder.
+- The local `create_all()` helper creates missing tables but does not version schema changes. Adopt Alembic migrations before maintaining production data.
+- Configure HTTPS, restricted database access, managed secrets, logging, backups, and operational monitoring before any deployment.
+
+Database exceptions are translated into generic HTTP errors so the API response does not expose connection strings or internal SQL details. Production logging and alerting still need to be configured for operators to diagnose failures safely.

@@ -106,3 +106,33 @@ uvicorn app.main:app --reload
 Open <http://127.0.0.1:8000/> for the browser interface or <http://127.0.0.1:8000/docs> for interactive API documentation. If the database already exists, skip `createdb`; run the initializer after configuring `.env`.
 
 The initializer uses SQLAlchemy `create_all()` for local development only. It does not run on application startup or per request. Use Alembic migrations to evolve schemas in a deployed environment.
+
+## API reference
+
+| Method | Path | Purpose | Successful response |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Check PostgreSQL connectivity | `200` with `{"status":"ok","database":"connected"}` |
+| `POST` | `/users/` | Create a user | `201` with the created user |
+| `GET` | `/users/{user_id}` | Fetch a user by numeric ID | `200` with the user |
+
+### Create a user
+
+```bash
+curl -X POST http://127.0.0.1:8000/users/ \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Deepesh","email":"deepesh@example.com"}'
+```
+
+The request body is validated before database work. A successful response includes the generated `id` and `created_at` values. Submitting an email that already exists returns `409 Conflict`.
+
+### Fetch a user
+
+Use the ID returned by the create request:
+
+```bash
+curl http://127.0.0.1:8000/users/1
+```
+
+An unknown ID returns `404 Not Found`. Invalid request data returns `422 Unprocessable Entity`. Unexpected database failures return a generic error response; internal SQL and credentials are not included in API error messages. If PostgreSQL is unavailable, `GET /health` returns `503 Service Unavailable`.
+
+The browser UI at `/` offers the same health, create, and lookup workflows. It calls these same-origin endpoints, so a separate frontend development server and CORS configuration are not required.

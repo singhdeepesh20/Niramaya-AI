@@ -43,3 +43,66 @@ The frontend calls the FastAPI routes. FastAPI validates request and response da
 | PostgreSQL driver | asyncpg |
 | Database | PostgreSQL |
 | Browser interface | HTML, CSS, vanilla JavaScript |
+
+## Repository layout
+
+```text
+app/
+├── main.py             # FastAPI application, frontend mount, health endpoint
+├── core/config.py      # Environment-backed settings
+├── db/
+│   ├── database.py     # Async engine, pool, session factory, request dependency
+│   ├── models.py       # SQLAlchemy declarative models
+│   └── init_db.py      # Explicit local table creation
+├── api/users.py        # User HTTP endpoints
+└── schemas/user.py    # Pydantic request and response models
+frontend/
+├── index.html
+├── styles.css
+└── app.js
+.env.example            # Safe local configuration template
+requirements.txt
+```
+
+## Quick start
+
+### Prerequisites
+
+- Python 3.12 or newer.
+- PostgreSQL running locally and a role that can create databases.
+
+Create the development database if it does not already exist:
+
+```bash
+createdb -h localhost -p 5432 -U postgres niramaya
+```
+
+### Install and configure
+
+Run these commands from the repository root:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+cp .env.example .env
+```
+
+Set `DATABASE_URL` in `.env` to match your local PostgreSQL credentials:
+
+```env
+DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/niramaya
+```
+
+Replace `YOUR_PASSWORD` locally. The URL uses the SQLAlchemy `postgresql` dialect with the async `asyncpg` driver. Never commit `.env` or place credentials in source code.
+
+### Initialize and run
+
+```bash
+python -m app.db.init_db
+uvicorn app.main:app --reload
+```
+
+Open <http://127.0.0.1:8000/> for the browser interface or <http://127.0.0.1:8000/docs> for interactive API documentation. If the database already exists, skip `createdb`; run the initializer after configuring `.env`.
+
+The initializer uses SQLAlchemy `create_all()` for local development only. It does not run on application startup or per request. Use Alembic migrations to evolve schemas in a deployed environment.

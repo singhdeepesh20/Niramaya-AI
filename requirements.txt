@@ -4,6 +4,8 @@ uvicorn[standard]==0.54.0
 # Async PostgreSQL persistence (stay on SQLAlchemy 2.0)
 sqlalchemy[asyncio]==2.0.54
 asyncpg==0.31.0
-pydantic>=2.8,<3.0
+# Request and response validation
+pydantic==2.13.5
+email-validator==2.3.0
 pydantic-settings>=2.4,<3.0
 email-validator>=2.2,<3.0

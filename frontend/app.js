@@ -161,3 +161,65 @@ createForm.addEventListener('submit', async (event) => {
     setButtonLoading(createButton, false);
   }
 });
+
+const lookupForm = document.querySelector('#lookup-form');
+const lookupMessage = document.querySelector('#lookup-message');
+const lookupButton = lookupForm.querySelector('button[type="submit"]');
+const userResult = document.querySelector('#user-result');
+
+function createResultField(label, value) {
+  const field = document.createElement('div');
+  field.className = 'result-field';
+  const fieldLabel = document.createElement('span');
+  fieldLabel.textContent = label;
+  const fieldValue = document.createElement('strong');
+  fieldValue.textContent = value;
+  field.append(fieldLabel, fieldValue);
+  return field;
+}
+
+function renderUser(user) {
+  const heading = document.createElement('div');
+  heading.className = 'user-result-heading';
+
+  const initials = user.name.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase();
+  const avatar = document.createElement('span');
+  avatar.className = 'user-avatar';
+  avatar.setAttribute('aria-hidden', 'true');
+  avatar.textContent = initials || 'U';
+
+  const title = document.createElement('div');
+  title.className = 'user-result-title';
+  const name = document.createElement('strong');
+  name.textContent = user.name;
+  const id = document.createElement('small');
+  id.textContent = `Profile ID ${user.id}`;
+  title.append(name, id);
+  heading.append(avatar, title);
+
+  const fields = document.createElement('div');
+  fields.className = 'result-fields';
+  fields.append(createResultField('Email', user.email));
+
+  userResult.replaceChildren(heading, fields);
+  userResult.hidden = false;
+}
+
+lookupForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  clearMessage(lookupMessage);
+  userResult.hidden = true;
+  lookupForm.setAttribute('aria-busy', 'true');
+  setButtonLoading(lookupButton, true, 'Searching…');
+
+  const id = lookupIdInput.value.trim();
+  try {
+    const user = await requestJson(`/users/${encodeURIComponent(id)}`);
+    renderUser(user);
+  } catch (error) {
+    showMessage(lookupMessage, error.message);
+  } finally {
+    lookupForm.setAttribute('aria-busy', 'false');
+    setButtonLoading(lookupButton, false);
+  }
+});

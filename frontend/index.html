@@ -96,13 +96,13 @@
                 <form id="create-form" class="form-stack">
                   <div class="field-group">
                     <label for="name">Full name</label>
-                    <input id="name" name="name" type="text" autocomplete="name" placeholder="e.g. Deepesh Singh" minlength="1" maxlength="120" required />
+                    <input id="name" name="name" type="text" autocomplete="name" aria-describedby="create-note" placeholder="e.g. Deepesh Singh" minlength="1" maxlength="120" required />
                   </div>
                   <div class="field-group">
                     <label for="email">Email address</label>
-                    <input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.com" maxlength="320" required />
+                    <input id="email" name="email" type="email" autocomplete="email" aria-describedby="create-note" placeholder="name@example.com" maxlength="320" required />
                   </div>
-                  <p class="field-hint">Use sample data only. This prototype does not authenticate users.</p>
+                  <p class="field-hint" id="create-note">Use sample data only. This prototype does not authenticate users.</p>
                   <button class="button button-primary" type="submit">
                     <span class="button-text">Create user</span>
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -128,9 +128,9 @@
                 <form id="lookup-form" class="form-stack">
                   <div class="field-group">
                     <label for="user-id">User ID</label>
-                    <input id="user-id" name="user_id" type="number" inputmode="numeric" min="1" step="1" placeholder="Enter a user ID" required />
+                    <input id="user-id" name="user_id" type="number" inputmode="numeric" min="1" step="1" aria-describedby="lookup-note" placeholder="Enter a user ID" required />
                   </div>
-                  <p class="field-hint">The ID is returned after a successful create request.</p>
+                  <p class="field-hint" id="lookup-note">The ID is returned after a successful create request.</p>
                   <button class="button button-secondary" type="submit">
                     <span class="button-text">Search users</span>
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>

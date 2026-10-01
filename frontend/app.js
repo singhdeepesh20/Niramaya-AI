@@ -76,6 +76,13 @@ function setButtonLoading(button, loading, loadingLabel) {
   button.setAttribute('aria-busy', String(loading));
 }
 
+function setFormBusy(form, busy) {
+  form.setAttribute('aria-busy', String(busy));
+  form.querySelectorAll('input').forEach((input) => {
+    input.disabled = busy;
+  });
+}
+
 const footerYear = document.querySelector('#footer-year');
 if (footerYear) footerYear.textContent = new Date().getFullYear();
 
@@ -135,7 +142,7 @@ const lookupIdInput = document.querySelector('#user-id');
 createForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearMessage(createMessage);
-  createForm.setAttribute('aria-busy', 'true');
+  setFormBusy(createForm, true);
   setButtonLoading(createButton, true, 'Creating profile…');
 
   const formData = new FormData(createForm);
@@ -157,7 +164,7 @@ createForm.addEventListener('submit', async (event) => {
   } catch (error) {
     showMessage(createMessage, error.message);
   } finally {
-    createForm.setAttribute('aria-busy', 'false');
+    setFormBusy(createForm, false);
     setButtonLoading(createButton, false);
   }
 });
@@ -209,7 +216,7 @@ lookupForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearMessage(lookupMessage);
   userResult.hidden = true;
-  lookupForm.setAttribute('aria-busy', 'true');
+  setFormBusy(lookupForm, true);
   setButtonLoading(lookupButton, true, 'Searching…');
 
   const id = lookupIdInput.value.trim();
@@ -219,7 +226,14 @@ lookupForm.addEventListener('submit', async (event) => {
   } catch (error) {
     showMessage(lookupMessage, error.message);
   } finally {
-    lookupForm.setAttribute('aria-busy', 'false');
+    setFormBusy(lookupForm, false);
     setButtonLoading(lookupButton, false);
   }
+});
+
+createForm.addEventListener('input', () => clearMessage(createMessage));
+
+lookupIdInput.addEventListener('input', () => {
+  clearMessage(lookupMessage);
+  userResult.hidden = true;
 });

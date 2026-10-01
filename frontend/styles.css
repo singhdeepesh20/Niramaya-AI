@@ -637,6 +637,12 @@ p {
   box-shadow: 0 0 0 3px rgb(58 151 124 / 12%);
 }
 
+.field-group input:disabled {
+  cursor: wait;
+  background: #f4f7f5;
+  color: #748781;
+}
+
 .field-hint {
   margin: -3px 0 0;
   color: #87958f;

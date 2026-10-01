@@ -3,86 +3,175 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f6f7f3" />
-    <title>Niramaya-AI · Backend starter</title>
+    <meta name="theme-color" content="#f3f7f4" />
+    <meta name="description" content="Niramaya-AI backend developer workspace preview." />
+    <title>Niramaya-AI | Developer workspace</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/styles.css" />
     <script src="/static/app.js" defer></script>
   </head>
   <body>
-    <main class="page-shell">
-      <header class="topbar">
-        <a class="brand" href="/" aria-label="Niramaya-AI home">
-          <span class="brand-mark" aria-hidden="true">N</span>
-          <span>Niramaya<span class="brand-light">-AI</span></span>
+    <div class="app-shell">
+      <header class="site-header">
+        <a class="brand" href="/" aria-label="Niramaya-AI developer workspace home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none">
+              <path d="M7 22.5 16 7l9 15.5H7Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" />
+              <path d="M16 13v8m-4-4h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+          </span>
+          <span class="brand-name">Niramaya<span>-AI</span></span>
         </a>
-        <a class="docs-link" href="/docs" target="_blank" rel="noreferrer">API docs <span aria-hidden="true">↗</span></a>
+        <div class="header-actions">
+          <span class="environment-badge"><span class="environment-dot"></span>Developer preview</span>
+          <a class="docs-link" href="/docs" target="_blank" rel="noreferrer">API docs <span aria-hidden="true">↗</span></a>
+        </div>
       </header>
 
-      <section class="intro">
-        <p class="eyebrow"><span class="eyebrow-dot"></span> BACKEND STARTER</p>
-        <h1>A healthy start<br />for better care.</h1>
-        <p class="intro-copy">A simple interface for trying your FastAPI and PostgreSQL user endpoints.</p>
-      </section>
-
-      <section class="workspace" aria-label="Backend tools">
-        <aside class="status-card">
-          <div class="card-heading">
-            <div>
-              <p class="section-kicker">SYSTEM STATUS</p>
-              <h2>Connection check</h2>
-            </div>
-            <span class="status-icon" aria-hidden="true">⌁</span>
+      <main>
+        <section class="hero" aria-labelledby="page-title">
+          <div class="hero-copy">
+            <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true"></span> HEALTHCARE PLATFORM · DEVELOPER WORKSPACE</p>
+            <h1 id="page-title">A stronger foundation<br />for <span>connected care.</span></h1>
+            <p class="hero-description">Explore the Niramaya-AI backend foundation: async APIs, PostgreSQL connectivity, and a simple user profile workflow.</p>
           </div>
-          <p class="muted">Check whether this app can reach its PostgreSQL database.</p>
-          <div class="health-result" id="health-result" role="status" aria-live="polite">
-            <span class="health-indicator" id="health-indicator"></span>
-            <span id="health-text">Checking connection…</span>
+          <div class="hero-art" aria-hidden="true">
+            <div class="orbit orbit-one"></div>
+            <div class="orbit orbit-two"></div>
+            <div class="orbit orbit-three"></div>
+            <div class="orbit-core"><span>+</span></div>
+            <span class="orbit-node node-one"></span>
+            <span class="orbit-node node-two"></span>
+            <span class="orbit-node node-three"></span>
           </div>
-          <button class="button button-secondary" id="health-button" type="button">Check again <span aria-hidden="true">↻</span></button>
-          <p class="helper">The API health endpoint checks the database connection.</p>
-        </aside>
+          <div class="hero-caption"><span class="caption-line"></span> A learning-stage prototype · AI features are not connected</div>
+        </section>
 
-        <div class="forms-column">
-          <section class="form-card" aria-labelledby="create-title">
-            <div class="card-heading">
-              <div>
-                <p class="section-kicker">CREATE</p>
-                <h2 id="create-title">Add a user</h2>
+        <section class="workspace" aria-label="Backend developer tools">
+          <div class="workspace-main">
+            <section class="panel health-panel" aria-labelledby="health-title">
+              <div class="panel-heading">
+                <div class="heading-with-icon">
+                  <span class="panel-icon health-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M3 12h4l2.1-6 4.1 12 2.1-6H21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </span>
+                  <div>
+                    <p class="section-label">SERVICE MONITOR</p>
+                    <h2 id="health-title">Database connection</h2>
+                  </div>
+                </div>
+                <span class="panel-index">01</span>
               </div>
-              <span class="step-number">01</span>
+              <p class="panel-description">A live check of the API’s connection to PostgreSQL.</p>
+              <div class="health-result" id="health-result" data-state="checking" role="status" aria-live="polite" aria-busy="true">
+                <span class="health-indicator" id="health-indicator" aria-hidden="true"></span>
+                <span class="health-copy"><strong id="health-text">Checking connection</strong><small id="health-detail">Contacting the health endpoint…</small></span>
+                <span class="health-state-label" id="health-state-label">Checking</span>
+              </div>
+              <div class="panel-actions">
+                <span class="last-checked" id="last-checked">Check runs when the page opens.</span>
+                <button class="button button-quiet" id="health-button" type="button">
+                  <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16.2 7.1A6.6 6.6 0 0 0 4.5 5.5L3 7m0 0V3.8M3 7h3.2M3.8 12.9a6.6 6.6 0 0 0 11.7 1.6l1.5-1.5m0 0v3.2m0-3.2h-3.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  <span>Run check</span>
+                </button>
+              </div>
+            </section>
+
+            <div class="workflow-grid">
+              <section class="panel workflow-panel" aria-labelledby="create-title">
+                <div class="panel-heading">
+                  <div class="heading-with-icon">
+                    <span class="panel-icon create-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0m14-9v6m-3-3h6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                    </span>
+                    <div>
+                      <p class="section-label">USER WORKFLOW</p>
+                      <h2 id="create-title">Create a profile</h2>
+                    </div>
+                  </div>
+                  <span class="panel-index">02</span>
+                </div>
+                <p class="panel-description">Create a basic user record in the connected database.</p>
+                <form id="create-form" class="form-stack">
+                  <div class="field-group">
+                    <label for="name">Full name</label>
+                    <input id="name" name="name" type="text" autocomplete="name" placeholder="e.g. Deepesh Singh" minlength="1" maxlength="120" required />
+                  </div>
+                  <div class="field-group">
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="email" placeholder="name@example.com" maxlength="320" required />
+                  </div>
+                  <p class="field-hint">Use sample data only. This prototype does not authenticate users.</p>
+                  <button class="button button-primary" type="submit">
+                    <span class="button-text">Create user</span>
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </button>
+                </form>
+                <div class="form-message" id="create-message" role="status" aria-live="polite" hidden></div>
+              </section>
+
+              <section class="panel workflow-panel" aria-labelledby="lookup-title">
+                <div class="panel-heading">
+                  <div class="heading-with-icon">
+                    <span class="panel-icon search-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none"><circle cx="10.8" cy="10.8" r="6.8" stroke="currentColor" stroke-width="1.7" /><path d="m16 16 4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /></svg>
+                    </span>
+                    <div>
+                      <p class="section-label">USER WORKFLOW</p>
+                      <h2 id="lookup-title">Find a profile</h2>
+                    </div>
+                  </div>
+                  <span class="panel-index">03</span>
+                </div>
+                <p class="panel-description">Retrieve a saved user by its database ID.</p>
+                <form id="lookup-form" class="form-stack">
+                  <div class="field-group">
+                    <label for="user-id">User ID</label>
+                    <input id="user-id" name="user_id" type="number" inputmode="numeric" min="1" step="1" placeholder="Enter a user ID" required />
+                  </div>
+                  <p class="field-hint">The ID is returned after a successful create request.</p>
+                  <button class="button button-secondary" type="submit">
+                    <span class="button-text">Search users</span>
+                    <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+                  </button>
+                </form>
+                <div class="form-message" id="lookup-message" role="status" aria-live="polite" hidden></div>
+                <section class="user-result" id="user-result" aria-label="User profile details" aria-live="polite" hidden></section>
+              </section>
             </div>
-            <form id="create-form">
-              <label for="name">Full name</label>
-              <input id="name" name="name" type="text" placeholder="e.g. Deepesh Singh" maxlength="120" required />
-              <label for="email">Email address</label>
-              <input id="email" name="email" type="email" placeholder="you@example.com" maxlength="320" required />
-              <button class="button button-primary" type="submit">Create user <span aria-hidden="true">→</span></button>
-            </form>
-            <div class="message" id="create-message" role="status" aria-live="polite" hidden></div>
-          </section>
+          </div>
 
-          <section class="form-card lookup-card" aria-labelledby="lookup-title">
-            <div class="card-heading">
-              <div>
-                <p class="section-kicker">LOOK UP</p>
-                <h2 id="lookup-title">Find a user</h2>
+          <aside class="workspace-aside" aria-label="Project information">
+            <section class="panel project-panel" aria-labelledby="project-title">
+              <div class="aside-heading">
+                <div><p class="section-label">ENVIRONMENT</p><h2 id="project-title">Project status</h2></div>
+                <span class="preview-tag">PREVIEW</span>
               </div>
-              <span class="step-number">02</span>
-            </div>
-            <form class="lookup-form" id="lookup-form">
-              <div class="lookup-field">
-                <label for="user-id">User ID</label>
-                <input id="user-id" name="user_id" type="number" min="1" placeholder="Enter an ID" required />
+              <dl class="status-list">
+                <div><dt>API</dt><dd><span class="list-dot dot-blue"></span>FastAPI</dd></div>
+                <div><dt>Database</dt><dd><span class="list-dot dot-green"></span>PostgreSQL</dd></div>
+                <div><dt>AI services</dt><dd><span class="list-dot dot-muted"></span>Not connected</dd></div>
+              </dl>
+              <div class="notice-card">
+                <span class="notice-icon" aria-hidden="true">i</span>
+                <p><strong>Prototype environment</strong><br />This app has no authentication or clinical features. Do not enter patient information.</p>
               </div>
-              <button class="button button-primary" type="submit">Search <span aria-hidden="true">→</span></button>
-            </form>
-            <div class="message" id="lookup-message" role="status" aria-live="polite" hidden></div>
-            <article class="user-result" id="user-result" hidden></article>
-          </section>
-        </div>
-      </section>
+            </section>
 
-      <footer><span>Built for learning, ready to grow.</span><span>FastAPI <i>·</i> SQLAlchemy <i>·</i> PostgreSQL</span></footer>
-    </main>
+            <section class="panel resources-panel" aria-labelledby="resources-title">
+              <p class="section-label">DEVELOPER RESOURCES</p>
+              <h2 id="resources-title">Keep building</h2>
+              <a class="resource-link" href="/docs" target="_blank" rel="noreferrer"><span class="resource-icon" aria-hidden="true">↗</span><span><strong>Interactive API docs</strong><small>Explore endpoints with Swagger UI</small></span><span class="resource-arrow" aria-hidden="true">→</span></a>
+              <a class="resource-link" href="/openapi.json" target="_blank" rel="noreferrer"><span class="resource-icon resource-icon-alt" aria-hidden="true">{ }</span><span><strong>OpenAPI schema</strong><small>View the generated API contract</small></span><span class="resource-arrow" aria-hidden="true">→</span></a>
+            </section>
+          </aside>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span>© Niramaya-AI <span id="footer-year">2026</span> · Developer preview</span>
+        <span class="footer-stack">FastAPI <i>·</i> SQLAlchemy <i>·</i> PostgreSQL</span>
+      </footer>
+    </div>
   </body>
 </html>

@@ -59,7 +59,8 @@ app/
 frontend/
 ├── index.html
 ├── styles.css
-└── app.js
+├── app.js
+└── favicon.svg
 .env.example            # Safe local configuration template
 requirements.txt
 ```
@@ -136,6 +137,18 @@ curl http://127.0.0.1:8000/users/1
 An unknown ID returns `404 Not Found`. Invalid request data returns `422 Unprocessable Entity`. Unexpected database failures return a generic error response; internal SQL and credentials are not included in API error messages. If PostgreSQL is unavailable, `GET /health` returns `503 Service Unavailable`.
 
 The browser UI at `/` offers the same health, create, and lookup workflows. It calls these same-origin endpoints, so a separate frontend development server and CORS configuration are not required.
+
+## Frontend workspace
+
+The browser workspace is intentionally built with static HTML, CSS, and JavaScript. It includes:
+
+- A service-health panel with checking, connected, and unavailable states plus a manual retry.
+- A user creation form that shows request progress and places a successful profile ID into the lookup field.
+- A lookup card that renders profile details safely as text and offers a copy-ID action.
+- A project-status panel that identifies the current prototype boundaries and links to the API docs and OpenAPI schema.
+- Responsive layouts, keyboard skip navigation, visible focus states, reduced-motion support, and live status announcements.
+
+The UI sends same-origin requests to `/health` and `/users/`. Requests time out after ten seconds and display concise, user-facing errors. No browser-side secrets or external font services are required.
 
 ## Security and deployment status
 

@@ -202,7 +202,14 @@ function renderUser(user) {
   const id = document.createElement('small');
   id.textContent = `Profile ID ${user.id}`;
   title.append(name, id);
-  heading.append(avatar, title);
+
+  const copyButton = document.createElement('button');
+  copyButton.className = 'copy-id-button';
+  copyButton.type = 'button';
+  copyButton.dataset.copyId = user.id;
+  copyButton.setAttribute('aria-label', `Copy profile ID ${user.id}`);
+  copyButton.textContent = 'Copy ID';
+  heading.append(avatar, title, copyButton);
 
   const fields = document.createElement('div');
   fields.className = 'result-fields';
@@ -236,4 +243,16 @@ createForm.addEventListener('input', () => clearMessage(createMessage));
 lookupIdInput.addEventListener('input', () => {
   clearMessage(lookupMessage);
   userResult.hidden = true;
+});
+
+userResult.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-copy-id]');
+  if (!button) return;
+
+  try {
+    await navigator.clipboard.writeText(button.dataset.copyId);
+    showMessage(lookupMessage, 'Profile ID copied to clipboard.', 'success');
+  } catch {
+    showMessage(lookupMessage, 'Clipboard access is unavailable in this browser.');
+  }
 });

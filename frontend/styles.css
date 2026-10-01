@@ -875,6 +875,23 @@ p {
   font-size: 9px;
 }
 
+.copy-id-button {
+  min-height: 29px;
+  padding: 0 9px;
+  border: 1px solid #d4e4da;
+  border-radius: 7px;
+  background: #fff;
+  color: var(--brand-strong);
+  font-size: 9px;
+  font-weight: 680;
+  white-space: nowrap;
+}
+
+.copy-id-button:hover {
+  border-color: #9ac8ad;
+  background: #f2f8f4;
+}
+
 .result-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

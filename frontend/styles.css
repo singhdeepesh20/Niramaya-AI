@@ -492,6 +492,14 @@ p {
   color: var(--danger);
 }
 
+.health-result[data-state="checking"] .health-indicator {
+  animation: status-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  50% { box-shadow: 0 0 0 7px rgb(212 155 59 / 8%); }
+}
+
 .panel-actions {
   display: flex;
   align-items: center;
@@ -568,6 +576,29 @@ p {
   transform: none;
 }
 
+.button.is-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.button.is-loading > svg {
+  display: none;
+}
+
+.button.is-loading::after {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: button-spin .7s linear infinite;
+  content: "";
+}
+
+@keyframes button-spin {
+  to { transform: rotate(360deg); }
+}
+
 .form-stack {
   display: grid;
   gap: 13px;
@@ -632,6 +663,12 @@ p {
   border-color: #f0d7d3;
   background: #fff5f3;
   color: #9c443d;
+}
+
+.form-message[data-kind="info"] {
+  border-color: #d8e8df;
+  background: #f2f8f4;
+  color: #41645a;
 }
 
 .project-panel {

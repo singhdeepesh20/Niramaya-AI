@@ -877,6 +877,62 @@ p {
   font-style: normal;
 }
 
+.skip-link {
+  position: fixed;
+  z-index: 10;
+  top: 12px;
+  left: 12px;
+  padding: 10px 14px;
+  border: 2px solid var(--brand-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--brand-strong);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+:where(a, button, input):focus-visible,
+main:focus-visible {
+  outline: 3px solid #408f79;
+  outline-offset: 3px;
+}
+
+.field-group input:focus-visible {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .health-indicator,
+  .environment-dot,
+  .list-dot {
+    outline: 1px solid CanvasText;
+  }
+
+  .panel,
+  .health-result,
+  .field-group input,
+  .button {
+    border: 1px solid CanvasText;
+  }
+}
+
 @media (max-width: 1080px) {
   .app-shell {
     width: min(100% - 48px, 1000px);

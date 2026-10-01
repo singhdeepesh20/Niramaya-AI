@@ -908,6 +908,28 @@ p {
   font-size: 9px;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .panel {
+    transition: border-color .18s ease, box-shadow .18s ease;
+  }
+
+  .workflow-panel:hover,
+  .project-panel:hover,
+  .resources-panel:hover {
+    border-color: #d1e1d8;
+    box-shadow: 0 4px 9px rgb(31 65 52 / 4%), 0 16px 32px rgb(31 65 52 / 6%);
+  }
+
+  .resource-link {
+    transition: padding .16s ease, background-color .16s ease;
+  }
+
+  .resource-link:hover {
+    padding-inline: 5px;
+    background: #f8fbf9;
+  }
+}
+
 .footer-stack i {
   margin: 0 5px;
   color: #b0bdb6;

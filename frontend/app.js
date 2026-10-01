@@ -185,6 +185,12 @@ function createResultField(label, value) {
   return field;
 }
 
+function formatCreatedAt(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Timestamp unavailable';
+  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
+}
+
 function renderUser(user) {
   const heading = document.createElement('div');
   heading.className = 'user-result-heading';
@@ -214,6 +220,7 @@ function renderUser(user) {
   const fields = document.createElement('div');
   fields.className = 'result-fields';
   fields.append(createResultField('Email', user.email));
+  fields.append(createResultField('Created', formatCreatedAt(user.created_at)));
 
   userResult.replaceChildren(heading, fields);
   userResult.hidden = false;

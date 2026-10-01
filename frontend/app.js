@@ -78,3 +78,51 @@ function setButtonLoading(button, loading, loadingLabel) {
 
 const footerYear = document.querySelector('#footer-year');
 if (footerYear) footerYear.textContent = new Date().getFullYear();
+
+const healthResult = document.querySelector('#health-result');
+const healthText = document.querySelector('#health-text');
+const healthDetail = document.querySelector('#health-detail');
+const healthStateLabel = document.querySelector('#health-state-label');
+const lastChecked = document.querySelector('#last-checked');
+const healthButton = document.querySelector('#health-button');
+
+function renderHealth(state, title, detail, label) {
+  healthResult.dataset.state = state;
+  healthResult.setAttribute('aria-busy', String(state === 'checking'));
+  healthText.textContent = title;
+  healthDetail.textContent = detail;
+  healthStateLabel.textContent = label;
+}
+
+function setHealthButtonLoading(loading) {
+  const label = healthButton.querySelector('span');
+  if (!healthButton.dataset.idleLabel) healthButton.dataset.idleLabel = label.textContent;
+  label.textContent = loading ? 'Checking…' : healthButton.dataset.idleLabel;
+  healthButton.disabled = loading;
+  healthButton.classList.toggle('is-loading', loading);
+  healthButton.setAttribute('aria-busy', String(loading));
+}
+
+async function checkHealth() {
+  renderHealth('checking', 'Checking connection', 'Contacting the health endpoint…', 'Checking');
+  setHealthButtonLoading(true);
+
+  try {
+    const payload = await requestJson('/health');
+    const connected = payload.status === 'ok' && payload.database === 'connected';
+    if (!connected) throw new Error('The API responded, but the database is not connected.');
+
+    renderHealth('connected', 'Database connected', 'PostgreSQL responded successfully.', 'Connected');
+  } catch (error) {
+    renderHealth('unavailable', 'Connection unavailable', error.message, 'Unavailable');
+  } finally {
+    lastChecked.textContent = `Last checked at ${new Intl.DateTimeFormat(undefined, {
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(new Date())}`;
+    setHealthButtonLoading(false);
+  }
+}
+
+healthButton.addEventListener('click', checkHealth);
+checkHealth();

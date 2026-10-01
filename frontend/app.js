@@ -126,3 +126,38 @@ async function checkHealth() {
 
 healthButton.addEventListener('click', checkHealth);
 checkHealth();
+
+const createForm = document.querySelector('#create-form');
+const createMessage = document.querySelector('#create-message');
+const createButton = createForm.querySelector('button[type="submit"]');
+const lookupIdInput = document.querySelector('#user-id');
+
+createForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  clearMessage(createMessage);
+  createForm.setAttribute('aria-busy', 'true');
+  setButtonLoading(createButton, true, 'Creating profile…');
+
+  const formData = new FormData(createForm);
+  const body = {
+    name: String(formData.get('name') || '').trim(),
+    email: String(formData.get('email') || '').trim(),
+  };
+
+  try {
+    const user = await requestJson('/users/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    showMessage(createMessage, `User created successfully. Profile ID: ${user.id}.`, 'success');
+    createForm.reset();
+    lookupIdInput.value = user.id;
+  } catch (error) {
+    showMessage(createMessage, error.message);
+  } finally {
+    createForm.setAttribute('aria-busy', 'false');
+    setButtonLoading(createButton, false);
+  }
+});

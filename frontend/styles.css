@@ -1219,3 +1219,48 @@ main:focus-visible {
     flex-direction: column;
   }
 }
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --canvas: #111b18;
+  --surface: #17241f;
+  --surface-soft: #1c2b25;
+  --surface-tint: #22372e;
+  --ink: #e9f1eb;
+  --ink-soft: #c5d4cc;
+  --muted: #9aada3;
+  --line: #2b4036;
+  --line-strong: #3a5146;
+  --brand: #55b49a;
+  --brand-strong: #75c7a9;
+  --brand-soft: #203b31;
+  --success: #70c49b;
+  --warning: #e0b86b;
+  --danger: #e58f84;
+  --shadow-soft: 0 10px 32px rgb(0 0 0 / 18%);
+  --shadow-card: 0 2px 5px rgb(0 0 0 / 12%), 0 12px 28px rgb(0 0 0 / 12%);
+}
+
+:root[data-theme="dark"] body {
+  background:
+    radial-gradient(ellipse at 50% -22rem, #1d382c 0, transparent 45rem),
+    var(--canvas);
+}
+
+:root[data-theme="dark"] .site-header,
+:root[data-theme="dark"] .site-footer {
+  border-color: #293d34;
+}
+
+:root[data-theme="dark"] .environment-badge {
+  border-color: var(--line);
+  background: rgb(23 36 31 / 80%);
+  color: var(--ink-soft);
+}
+
+:root[data-theme="dark"] .section-label,
+:root[data-theme="dark"] .last-checked,
+:root[data-theme="dark"] .site-footer,
+:root[data-theme="dark"] .resource-link small {
+  color: #9cafa5;
+}

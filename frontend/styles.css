@@ -1264,3 +1264,182 @@ main:focus-visible {
 :root[data-theme="dark"] .resource-link small {
   color: #9cafa5;
 }
+
+:root[data-theme="dark"] .panel {
+  border-color: #2a4036;
+  background-color: var(--surface);
+}
+
+:root[data-theme="dark"] .health-result {
+  border-color: #32483d;
+  background: #1b2b24;
+}
+
+:root[data-theme="dark"] .health-result[data-state="connected"] {
+  border-color: #315745;
+  background: #192c23;
+}
+
+:root[data-theme="dark"] .health-result[data-state="unavailable"] {
+  border-color: #65413b;
+  background: #2d211f;
+}
+
+:root[data-theme="dark"] .health-state-label {
+  background: #3a3020;
+  color: #e0b86b;
+}
+
+:root[data-theme="dark"] .health-result[data-state="connected"] .health-state-label {
+  background: #203c2d;
+  color: #83d4a9;
+}
+
+:root[data-theme="dark"] .health-result[data-state="unavailable"] .health-state-label {
+  background: #472b27;
+  color: #ee9b8e;
+}
+
+:root[data-theme="dark"] .button-primary {
+  background: #55b49a;
+  color: #102c25;
+}
+
+:root[data-theme="dark"] .button-primary:hover {
+  background: #70c5a8;
+}
+
+:root[data-theme="dark"] .button-secondary {
+  border-color: #355244;
+  background: #20362c;
+  color: #a5e0c2;
+}
+
+:root[data-theme="dark"] .button-secondary:hover,
+:root[data-theme="dark"] .button-quiet:hover {
+  border-color: #4d755f;
+  background: #2a4436;
+}
+
+:root[data-theme="dark"] .field-group label,
+:root[data-theme="dark"] .resource-link strong {
+  color: #c3d2ca;
+}
+
+:root[data-theme="dark"] .field-group input {
+  border-color: #3b5147;
+  background: #111d18;
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .field-group input::placeholder {
+  color: #81958a;
+}
+
+:root[data-theme="dark"] .field-group input:disabled {
+  background: #1b2a23;
+  color: #92a59b;
+}
+
+:root[data-theme="dark"] .field-group input:focus {
+  border-color: #66bb9c;
+  box-shadow: 0 0 0 3px rgb(86 185 151 / 18%);
+}
+
+:root[data-theme="dark"] .form-message[data-kind="success"] {
+  border-color: #315441;
+  background: #1a2d23;
+  color: #9cdbb6;
+}
+
+:root[data-theme="dark"] .form-message[data-kind="error"] {
+  border-color: #5d3b36;
+  background: #2c211f;
+  color: #e8a29a;
+}
+
+:root[data-theme="dark"] .form-message[data-kind="info"] {
+  border-color: #354e40;
+  background: #1d3027;
+  color: #bdd7c8;
+}
+
+:root[data-theme="dark"] .project-panel {
+  background: linear-gradient(150deg, #17241f 20%, #1b2a23 100%);
+}
+
+:root[data-theme="dark"] .preview-tag {
+  border-color: #5c4d2e;
+  background: #342d1e;
+  color: #e4c47d;
+}
+
+:root[data-theme="dark"] .status-list > div,
+:root[data-theme="dark"] .resource-link,
+:root[data-theme="dark"] .user-result-heading {
+  border-color: #2a3d34;
+}
+
+:root[data-theme="dark"] .status-list dd {
+  color: #c6d5cd;
+}
+
+:root[data-theme="dark"] .notice-card {
+  border-color: #594b2d;
+  background: #2d291e;
+}
+
+:root[data-theme="dark"] .notice-icon {
+  background: #514426;
+  color: #efd28e;
+}
+
+:root[data-theme="dark"] .notice-card p {
+  color: #d7c89f;
+}
+
+:root[data-theme="dark"] .notice-card strong {
+  color: #f0dfb3;
+}
+
+:root[data-theme="dark"] .resource-icon {
+  border-color: #345244;
+  background: #20372c;
+  color: #8dd1ad;
+}
+
+:root[data-theme="dark"] .resource-icon-alt {
+  border-color: #4b3d5d;
+  background: #2c2636;
+  color: #c1a9dd;
+}
+
+:root[data-theme="dark"] .resource-link:hover {
+  background: #1d2d25;
+}
+
+:root[data-theme="dark"] .user-result {
+  border-color: #31473b;
+  background: #1b2b23;
+}
+
+:root[data-theme="dark"] .user-avatar {
+  background: #254436;
+  color: #a8e0c1;
+}
+
+:root[data-theme="dark"] .copy-id-button {
+  border-color: #3a5947;
+  background: #1b2d24;
+  color: #a5dfbd;
+}
+
+:root[data-theme="dark"] .copy-id-button:hover {
+  border-color: #5e8b70;
+  background: #243b2e;
+}
+
+:root[data-theme="dark"] :where(a, button, input):focus-visible,
+:root[data-theme="dark"] main:focus-visible {
+  outline-color: #90ddb7;
+}

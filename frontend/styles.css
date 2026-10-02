@@ -551,6 +551,65 @@ p {
   line-height: 1.5;
 }
 
+.auto-check-control {
+  position: relative;
+  display: inline-flex;
+  min-height: 32px;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 7px;
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 9px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.auto-check-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.auto-check-box {
+  display: grid;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: var(--surface);
+  color: white;
+}
+
+.auto-check-box::after {
+  width: 4px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  content: "";
+  opacity: 0;
+  transform: rotate(45deg) translate(-1px, -1px);
+}
+
+.auto-check-control input:checked + .auto-check-box {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+
+.auto-check-control input:checked + .auto-check-box::after {
+  opacity: 1;
+}
+
+.auto-check-control input:focus-visible + .auto-check-box {
+  outline: 3px solid #408f79;
+  outline-offset: 2px;
+}
+
 .button {
   display: inline-flex;
   min-height: 40px;

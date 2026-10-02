@@ -197,6 +197,19 @@ healthButton.addEventListener('click', checkHealth);
 syncHealthPolling();
 checkHealth();
 
+document.addEventListener('visibilitychange', () => {
+  syncHealthPolling();
+  if (document.visibilityState === 'visible' && autoCheckInput.checked) checkHealth();
+});
+
+window.addEventListener('offline', () => {
+  renderHealth('unavailable', 'Browser is offline', 'Reconnect to the internet to reach the API.', 'Offline');
+});
+
+window.addEventListener('online', () => {
+  checkHealth();
+});
+
 const createForm = document.querySelector('#create-form');
 const createMessage = document.querySelector('#create-message');
 const createButton = createForm.querySelector('button[type="submit"]');

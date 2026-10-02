@@ -139,6 +139,9 @@ const healthDetail = document.querySelector('#health-detail');
 const healthStateLabel = document.querySelector('#health-state-label');
 const lastChecked = document.querySelector('#last-checked');
 const healthButton = document.querySelector('#health-button');
+const autoCheckInput = document.querySelector('#auto-check');
+let healthCheckInFlight = false;
+let healthPollingTimer = null;
 
 function renderHealth(state, title, detail, label) {
   healthResult.dataset.state = state;
@@ -158,6 +161,8 @@ function setHealthButtonLoading(loading) {
 }
 
 async function checkHealth() {
+  if (healthCheckInFlight) return;
+  healthCheckInFlight = true;
   renderHealth('checking', 'Checking connection', 'Contacting the health endpoint…', 'Checking');
   setHealthButtonLoading(true);
 
@@ -175,10 +180,21 @@ async function checkHealth() {
       minute: '2-digit',
     }).format(new Date())}`;
     setHealthButtonLoading(false);
+    healthCheckInFlight = false;
   }
 }
 
+function syncHealthPolling() {
+  window.clearInterval(healthPollingTimer);
+  healthPollingTimer = null;
+  if (autoCheckInput.checked && document.visibilityState === 'visible') {
+    healthPollingTimer = window.setInterval(checkHealth, 30_000);
+  }
+}
+
+autoCheckInput.addEventListener('change', syncHealthPolling);
 healthButton.addEventListener('click', checkHealth);
+syncHealthPolling();
 checkHealth();
 
 const createForm = document.querySelector('#create-form');

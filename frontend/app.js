@@ -86,6 +86,31 @@ function setFormBusy(form, busy) {
 const footerYear = document.querySelector('#footer-year');
 if (footerYear) footerYear.textContent = new Date().getFullYear();
 
+const THEME_STORAGE_KEY = 'niramaya-theme';
+const themeToggle = document.querySelector('#theme-toggle');
+const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+const systemThemePreference = window.matchMedia('(prefers-color-scheme: dark)');
+
+function readThemePreference() {
+  try {
+    const preference = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return preference === 'light' || preference === 'dark' ? preference : null;
+  } catch {
+    return null;
+  }
+}
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  document.documentElement.dataset.theme = theme;
+  themeToggle.setAttribute('aria-pressed', String(isDark));
+  themeToggle.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
+  themeToggle.title = isDark ? 'Switch to light theme' : 'Switch to dark theme';
+  themeColorMeta.content = isDark ? '#111b18' : '#f3f7f4';
+}
+
+applyTheme(readThemePreference() || (systemThemePreference.matches ? 'dark' : 'light'));
+
 const healthResult = document.querySelector('#health-result');
 const healthText = document.querySelector('#health-text');
 const healthDetail = document.querySelector('#health-detail');

@@ -499,6 +499,13 @@ p {
   font-weight: 700;
 }
 
+.health-latency {
+  flex: 0 0 auto;
+  color: #82948b;
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+}
+
 .health-result[data-state="connected"] {
   border-color: #cfe6d9;
   background: #f3faf6;
@@ -1347,6 +1354,10 @@ main:focus-visible {
 :root[data-theme="dark"] .health-state-label {
   background: #3a3020;
   color: #e0b86b;
+}
+
+:root[data-theme="dark"] .health-latency {
+  color: #a1b5aa;
 }
 
 :root[data-theme="dark"] .health-result[data-state="connected"] .health-state-label {

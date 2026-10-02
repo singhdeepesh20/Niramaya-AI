@@ -136,6 +136,7 @@ window.addEventListener('storage', (event) => {
 const healthResult = document.querySelector('#health-result');
 const healthText = document.querySelector('#health-text');
 const healthDetail = document.querySelector('#health-detail');
+const healthLatency = document.querySelector('#health-latency');
 const healthStateLabel = document.querySelector('#health-state-label');
 const lastChecked = document.querySelector('#last-checked');
 const healthButton = document.querySelector('#health-button');
@@ -163,6 +164,7 @@ function setHealthButtonLoading(loading) {
 async function checkHealth() {
   if (healthCheckInFlight) return;
   healthCheckInFlight = true;
+  const startedAt = performance.now();
   renderHealth('checking', 'Checking connection', 'Contacting the health endpoint…', 'Checking');
   setHealthButtonLoading(true);
 
@@ -175,6 +177,8 @@ async function checkHealth() {
   } catch (error) {
     renderHealth('unavailable', 'Connection unavailable', error.message, 'Unavailable');
   } finally {
+    healthLatency.textContent = `${Math.round(performance.now() - startedAt)} ms`;
+    healthLatency.hidden = false;
     lastChecked.textContent = `Last checked at ${new Intl.DateTimeFormat(undefined, {
       hour: 'numeric',
       minute: '2-digit',

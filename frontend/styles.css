@@ -1502,3 +1502,23 @@ main:focus-visible {
 :root[data-theme="dark"] main:focus-visible {
   outline-color: #90ddb7;
 }
+
+:root[data-theme="dark"] .auto-check-box {
+  border-color: #536b5d;
+  background: #17241f;
+}
+
+:root[data-theme="dark"] .auto-check-control input:checked + .auto-check-box {
+  border-color: #68bf9e;
+  background: #318569;
+}
+
+:root[data-theme="dark"] .auto-check-control input:focus-visible + .auto-check-box {
+  outline-color: #90ddb7;
+}
+
+@media (max-width: 390px) {
+  .environment-badge {
+    display: none;
+  }
+}

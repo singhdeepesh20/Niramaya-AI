@@ -253,6 +253,7 @@ const lookupForm = document.querySelector('#lookup-form');
 const lookupMessage = document.querySelector('#lookup-message');
 const lookupButton = lookupForm.querySelector('button[type="submit"]');
 const userResult = document.querySelector('#user-result');
+let currentUser = null;
 
 function createResultField(label, value) {
   const field = document.createElement('div');
@@ -272,6 +273,7 @@ function formatCreatedAt(value) {
 }
 
 function renderUser(user) {
+  currentUser = user;
   const heading = document.createElement('div');
   heading.className = 'user-result-heading';
 
@@ -309,7 +311,21 @@ function renderUser(user) {
   fields.append(createResultField('Email', user.email));
   fields.append(createResultField('Created', formatCreatedAt(user.created_at)));
 
-  userResult.replaceChildren(heading, fields);
+  const actions = document.createElement('div');
+  actions.className = 'user-result-actions';
+  const exportButton = document.createElement('button');
+  exportButton.className = 'result-action-button';
+  exportButton.type = 'button';
+  exportButton.dataset.exportUser = user.id;
+  exportButton.textContent = 'Download JSON';
+  const clearButton = document.createElement('button');
+  clearButton.className = 'result-action-button result-action-secondary';
+  clearButton.type = 'button';
+  clearButton.dataset.clearResult = '';
+  clearButton.textContent = 'Clear result';
+  actions.append(exportButton, clearButton);
+
+  userResult.replaceChildren(heading, fields, actions);
   userResult.hidden = false;
 }
 
@@ -317,6 +333,7 @@ lookupForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearMessage(lookupMessage);
   userResult.hidden = true;
+  currentUser = null;
   setFormBusy(lookupForm, true);
   setButtonLoading(lookupButton, true, 'Searching…');
 
@@ -337,11 +354,36 @@ createForm.addEventListener('input', () => clearMessage(createMessage));
 lookupIdInput.addEventListener('input', () => {
   clearMessage(lookupMessage);
   userResult.hidden = true;
+  currentUser = null;
 });
 
 userResult.addEventListener('click', async (event) => {
-  const button = event.target.closest('[data-copy-id], [data-share-user]');
+  const button = event.target.closest('[data-copy-id], [data-share-user], [data-export-user], [data-clear-result]');
   if (!button) return;
+
+  if (button.hasAttribute('data-clear-result')) {
+    currentUser = null;
+    userResult.replaceChildren();
+    userResult.hidden = true;
+    lookupIdInput.value = '';
+    clearMessage(lookupMessage);
+    lookupIdInput.focus();
+    return;
+  }
+
+  if (button.dataset.exportUser && currentUser) {
+    const download = document.createElement('a');
+    const file = new Blob([JSON.stringify(currentUser, null, 2)], { type: 'application/json' });
+    const fileUrl = URL.createObjectURL(file);
+    download.href = fileUrl;
+    download.download = `niramaya-user-${currentUser.id}.json`;
+    document.body.append(download);
+    download.click();
+    download.remove();
+    window.setTimeout(() => URL.revokeObjectURL(fileUrl), 0);
+    showMessage(lookupMessage, 'Profile exported as a JSON file.', 'success');
+    return;
+  }
 
   try {
     if (button.dataset.copyId) {

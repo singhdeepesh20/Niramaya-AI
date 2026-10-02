@@ -995,6 +995,42 @@ p {
   background: #f2f8f4;
 }
 
+.user-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #e4ece7;
+}
+
+.result-action-button {
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid #d3e4d9;
+  border-radius: 7px;
+  background: #edf6f0;
+  color: var(--brand-strong);
+  font-size: 9px;
+  font-weight: 680;
+}
+
+.result-action-button:hover {
+  border-color: #a4cbb2;
+  background: #e3f1e8;
+}
+
+.result-action-secondary {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+.result-action-secondary:hover {
+  border-color: #ead6d2;
+  background: #fff5f3;
+  color: var(--danger);
+}
+
 .result-fields {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1507,6 +1543,33 @@ main:focus-visible {
 :root[data-theme="dark"] .copy-id-button:hover {
   border-color: #5e8b70;
   background: #243b2e;
+}
+
+:root[data-theme="dark"] .user-result-actions {
+  border-color: #2a3d34;
+}
+
+:root[data-theme="dark"] .result-action-button {
+  border-color: #355744;
+  background: #21382c;
+  color: #a4dfbd;
+}
+
+:root[data-theme="dark"] .result-action-button:hover {
+  border-color: #5b8b6d;
+  background: #294332;
+}
+
+:root[data-theme="dark"] .result-action-secondary {
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .result-action-secondary:hover {
+  border-color: #65413b;
+  background: #2d211f;
+  color: #e58f84;
 }
 
 :root[data-theme="dark"] :where(a, button, input):focus-visible,

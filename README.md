@@ -143,8 +143,11 @@ The browser UI at `/` offers the same health, create, and lookup workflows. It c
 The browser workspace is intentionally built with static HTML, CSS, and JavaScript. It includes:
 
 - A service-health panel with checking, connected, and unavailable states plus a manual retry.
+- An opt-in 30-second health check that pauses while the browser tab is hidden, resumes when visible, and reports response time.
+- Light and dark themes that follow the operating-system preference by default and remember an explicit choice across visits and tabs.
 - A user creation form that shows request progress and places a successful profile ID into the lookup field.
-- A lookup card that renders profile details safely as text and offers a copy-ID action.
+- A lookup card that renders profile details safely as text and offers copy-ID, share-link, JSON-download, and clear-result actions.
+- Shareable profile URLs using the `?user_id=` query parameter.
 - A project-status panel that identifies the current prototype boundaries and links to the API docs and OpenAPI schema.
 - Responsive layouts, keyboard skip navigation, visible focus states, reduced-motion support, and live status announcements.
 

@@ -111,6 +111,28 @@ function applyTheme(theme) {
 
 applyTheme(readThemePreference() || (systemThemePreference.matches ? 'dark' : 'light'));
 
+themeToggle.addEventListener('click', () => {
+  const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(nextTheme);
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+  } catch {
+    // Theme switching still works for this page when storage is unavailable.
+  }
+});
+
+systemThemePreference.addEventListener('change', (event) => {
+  if (!readThemePreference()) applyTheme(event.matches ? 'dark' : 'light');
+});
+
+window.addEventListener('storage', (event) => {
+  if (event.key !== THEME_STORAGE_KEY) return;
+  const theme = event.newValue === 'dark' || event.newValue === 'light'
+    ? event.newValue
+    : systemThemePreference.matches ? 'dark' : 'light';
+  applyTheme(theme);
+});
+
 const healthResult = document.querySelector('#health-result');
 const healthText = document.querySelector('#health-text');
 const healthDetail = document.querySelector('#health-detail');

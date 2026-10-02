@@ -295,7 +295,14 @@ function renderUser(user) {
   copyButton.dataset.copyId = user.id;
   copyButton.setAttribute('aria-label', `Copy profile ID ${user.id}`);
   copyButton.textContent = 'Copy ID';
-  heading.append(avatar, title, copyButton);
+
+  const shareButton = document.createElement('button');
+  shareButton.className = 'copy-id-button';
+  shareButton.type = 'button';
+  shareButton.dataset.shareUser = user.id;
+  shareButton.setAttribute('aria-label', `Copy a link to profile ${user.id}`);
+  shareButton.textContent = 'Copy link';
+  heading.append(avatar, title, copyButton, shareButton);
 
   const fields = document.createElement('div');
   fields.className = 'result-fields';
@@ -333,13 +340,27 @@ lookupIdInput.addEventListener('input', () => {
 });
 
 userResult.addEventListener('click', async (event) => {
-  const button = event.target.closest('[data-copy-id]');
+  const button = event.target.closest('[data-copy-id], [data-share-user]');
   if (!button) return;
 
   try {
-    await navigator.clipboard.writeText(button.dataset.copyId);
-    showMessage(lookupMessage, 'Profile ID copied to clipboard.', 'success');
+    if (button.dataset.copyId) {
+      await navigator.clipboard.writeText(button.dataset.copyId);
+      showMessage(lookupMessage, 'Profile ID copied to clipboard.', 'success');
+    } else {
+      const profileUrl = new URL(window.location.href);
+      profileUrl.search = '';
+      profileUrl.searchParams.set('user_id', button.dataset.shareUser);
+      await navigator.clipboard.writeText(profileUrl.toString());
+      showMessage(lookupMessage, 'Profile link copied to clipboard.', 'success');
+    }
   } catch {
     showMessage(lookupMessage, 'Clipboard access is unavailable in this browser.');
   }
 });
+
+const sharedUserId = new URLSearchParams(window.location.search).get('user_id');
+if (sharedUserId && /^[1-9]\d*$/.test(sharedUserId) && Number.isSafeInteger(Number(sharedUserId))) {
+  lookupIdInput.value = sharedUserId;
+  lookupForm.requestSubmit();
+}

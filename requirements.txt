@@ -10,3 +10,8 @@ email-validator==2.3.0
 # Environment-backed application settings
 pydantic-settings==2.15.0
 python-dotenv==1.2.3
+# Password hashing, bearer-token authentication, and schema migrations
+pwdlib[argon2]==0.3.1
+PyJWT==2.15.1
+python-multipart==0.0.32
+alembic==1.20.0

@@ -4,14 +4,16 @@
 
 Niramaya-AI is a learning-stage backend prototype built with Python 3.12+, FastAPI, SQLAlchemy's async API, asyncpg, and PostgreSQL. It currently demonstrates a small user-profile workflow and a browser interface on top of that API.
 
-> **Project status:** this repository does not yet include an AI/ML model, authentication, patient records, or clinical functionality. It is not a medical product. Do not submit real patient information or use it to guide clinical decisions.
+> **Project status:** this repository includes basic password and bearer-token authentication, but no AI/ML model, patient records, or clinical functionality. It is not a medical product. Do not submit real patient information or use it to guide clinical decisions.
 
 ## What is implemented
 
 - A FastAPI application with a same-origin HTML/CSS/JavaScript frontend.
 - Async SQLAlchemy database access using `AsyncSession` and the `asyncpg` driver.
 - A `users` table with an integer ID, name, unique email, and server-generated creation time.
-- User creation and lookup endpoints, with duplicate and missing-user responses.
+- Account registration and login with Argon2 password hashing and short-lived signed access tokens.
+- Current-user identity and self-only profile lookup endpoints.
+- Versioned schema migration for adding password hashes to existing user tables.
 - A database-aware health endpoint and an explicit local table-initialization command.
 
 ## Architecture
@@ -19,7 +21,9 @@ Niramaya-AI is a learning-stage backend prototype built with Python 3.12+, FastA
 ```mermaid
 flowchart TD
     Browser[Browser UI<br/>frontend/] -->|HTTP| App[FastAPI app<br/>app/main.py]
+    App --> Auth[Auth router<br/>app/api/auth.py]
     App --> Router[Users router<br/>app/api/users.py]
+    Auth --> Security[Argon2 and JWT helpers<br/>app/core/security.py]
     Router --> Schema[Pydantic schemas<br/>app/schemas/user.py]
     Router -->|Depends get_db| Session[AsyncSession]
     Session --> ORM[SQLAlchemy model and queries]
@@ -28,6 +32,7 @@ flowchart TD
     Config[.env settings<br/>app/core/config.py] --> Engine[Async engine and pool]
     Engine --> Session
     Init[Local table initializer<br/>app/db/init_db.py] --> ORM
+    Migrate[Alembic migration<br/>alembic/] --> ORM
 ```
 
 The frontend calls the FastAPI routes. FastAPI validates request and response data with Pydantic; dependency injection supplies one async database session for the request. SQLAlchemy maps Python objects and queries to database operations, while asyncpg carries PostgreSQL protocol traffic to the database.
@@ -54,8 +59,13 @@ app/
 │   ├── database.py     # Async engine, pool, session factory, request dependency
 │   ├── models.py       # SQLAlchemy declarative models
 │   └── init_db.py      # Explicit local table creation
-├── api/users.py        # User HTTP endpoints
-└── schemas/user.py    # Pydantic request and response models
+├── api/
+│   ├── auth.py         # Registration, token, and current-user endpoints
+│   ├── dependencies.py # Bearer-token validation and current-user lookup
+│   └── users.py        # Authenticated profile endpoint
+├── core/security.py    # Password hashing and JWT creation
+└── schemas/            # Pydantic request and response models
+alembic/                # Versioned database migrations
 frontend/
 ├── index.html
 ├── styles.css
@@ -93,50 +103,54 @@ Set `DATABASE_URL` in `.env` to match your local PostgreSQL credentials:
 
 ```env
 DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/niramaya
+JWT_SECRET_KEY=replace-with-a-random-secret
+ACCESS_TOKEN_EXPIRE_MINUTES=30
 ```
 
-Replace `YOUR_PASSWORD` locally. The URL uses the SQLAlchemy `postgresql` dialect with the async `asyncpg` driver. Never commit `.env` or place credentials in source code.
+Replace `YOUR_PASSWORD` locally. Generate a unique token-signing secret with `openssl rand -hex 32`. The URL uses SQLAlchemy's `postgresql` dialect with the async `asyncpg` driver. Never commit `.env`, the signing secret, or database credentials.
 
 ### Initialize and run
 
 ```bash
-python -m app.db.init_db
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
 Open <http://127.0.0.1:8000/> for the browser interface or <http://127.0.0.1:8000/docs> for interactive API documentation. If the database already exists, skip `createdb`; run the initializer after configuring `.env`.
 
-The initializer uses SQLAlchemy `create_all()` for local development only. It does not run on application startup or per request. Use Alembic migrations to evolve schemas in a deployed environment.
+Alembic applies the versioned schema migration. `python -m app.db.init_db` remains available to create a fresh local schema, but does not upgrade existing tables.
 
 ## API reference
 
 | Method | Path | Purpose | Successful response |
 | --- | --- | --- | --- |
 | `GET` | `/health` | Check PostgreSQL connectivity | `200` with `{"status":"ok","database":"connected"}` |
-| `POST` | `/users/` | Create a user | `201` with the created user |
-| `GET` | `/users/{user_id}` | Fetch a user by numeric ID | `200` with the user |
+| `POST` | `/auth/register` | Register with name, email, and password | `201` with public profile fields |
+| `POST` | `/auth/token` | Exchange email and password for a bearer token | `200` with access token |
+| `GET` | `/auth/me` | Read the authenticated account | `200` with public profile fields |
+| `GET` | `/users/{user_id}` | Fetch the authenticated user's own profile | `200` with public profile fields |
 
-### Create a user
+### Register and sign in
 
 ```bash
-curl -X POST http://127.0.0.1:8000/users/ \
+curl -X POST http://127.0.0.1:8000/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Deepesh","email":"deepesh@example.com"}'
+  -d '{"name":"Deepesh","email":"deepesh@example.com","password":"a-long-unique-password"}'
 ```
 
-The request body is validated before database work. A successful response includes the generated `id` and `created_at` values. Submitting an email that already exists returns `409 Conflict`.
+Passwords must contain 12–128 characters. They are stored as Argon2 hashes, never as plaintext. Duplicate emails return `409 Conflict`. To sign in, send form fields named `username` (the email) and `password` to `/auth/token`; use the returned token as `Authorization: Bearer <access_token>`.
 
 ### Fetch a user
 
-Use the ID returned by the create request:
+The browser UI signs in and keeps the access token in memory for the current tab. API clients can fetch their own profile with:
 
 ```bash
-curl http://127.0.0.1:8000/users/1
+curl http://127.0.0.1:8000/auth/me -H 'Authorization: Bearer ACCESS_TOKEN'
 ```
 
-An unknown ID returns `404 Not Found`. Invalid request data returns `422 Unprocessable Entity`. Unexpected database failures return a generic error response; internal SQL and credentials are not included in API error messages. If PostgreSQL is unavailable, `GET /health` returns `503 Service Unavailable`.
+Protected endpoints return `401 Unauthorized` when the token is absent, invalid, or expired. `/users/{user_id}` only returns the signed-in user's own profile; other IDs return `404`. Invalid request data returns `422`. If PostgreSQL is unavailable, `GET /health` returns `503 Service Unavailable`.
 
-The browser UI at `/` offers the same health, create, and lookup workflows. It calls these same-origin endpoints, so a separate frontend development server and CORS configuration are not required.
+The browser UI at `/` offers health, registration, sign-in, sign-out, and own-profile workflows. It calls same-origin endpoints, so a separate frontend development server and CORS configuration are not required.
 
 ## Frontend workspace
 
@@ -157,7 +171,8 @@ The UI sends same-origin requests to `/health` and `/users/`. Requests time out 
 
 This codebase is a local development foundation, not a deployment-ready healthcare service.
 
-- **Authentication and authorization are not implemented.** The user endpoints are currently public to anyone who can reach the app. Do not expose them to the internet as-is.
+- **Authentication is foundational, not deployment complete.** Access tokens are signed with HS256, expire after 30 minutes by default, and are held in browser memory. Signing out clears the browser token; an issued token remains valid until it expires. There are no refresh/revocation tokens, rate limits, email verification, password reset, MFA, or security audit events.
+- **Use HTTPS and a strong secret.** Set `JWT_SECRET_KEY` from a secret manager in deployments. Do not reuse the database password or commit the key.
 - **The user model is only a demonstration.** It stores a name and email; it is not a patient model and has no consent, access-control, or audit trail.
 - **Do not use real patient or other sensitive personal data** with this prototype.
 - Keep real credentials in a local or deployment secret store. `.env` is ignored by Git; `.env.example` contains only a placeholder.
@@ -172,7 +187,7 @@ The repository name describes the intended direction; AI capabilities are **not 
 
 Potential milestones:
 
-1. Add authentication, authorization, consent, and audit events before storing sensitive records.
+1. Add authorization, consent, and audit events before storing sensitive records.
 2. Design a data model and document-ingestion workflow with validation, access controls, and retention rules.
 3. Add an independently deployable model or inference adapter with explicit input/output schemas and timeouts.
 4. Evaluate model quality, privacy, bias, and failure behavior on representative, approved data before release.

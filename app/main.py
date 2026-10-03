@@ -8,6 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.users import router as users_router
+from app.api.auth import router as auth_router
 from app.db.database import AsyncSessionLocal, engine
 
 
@@ -19,6 +20,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Niramaya-AI Backend", lifespan=lifespan)
 app.include_router(users_router)
+app.include_router(auth_router)
 
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")

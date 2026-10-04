@@ -17,7 +17,13 @@ from app.schemas.user import UserResponse
 router = APIRouter(prefix="/auth", tags=["authentication"])
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register an account",
+    description="Create an account with a unique username and a password of at least 12 characters.",
+)
 async def register(payload: UserRegister, db: Annotated[AsyncSession, Depends(get_db)]) -> User:
     email = str(payload.email).lower()
     try:
@@ -49,7 +55,12 @@ async def register(payload: UserRegister, db: Annotated[AsyncSession, Depends(ge
         raise HTTPException(status_code=500, detail="Database operation failed") from exc
 
 
-@router.post("/token", response_model=TokenResponse)
+@router.post(
+    "/token",
+    response_model=TokenResponse,
+    summary="Sign in with username and password",
+    description="Exchange OAuth2 form fields username and password for a signed bearer access token.",
+)
 async def login(
     form: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[AsyncSession, Depends(get_db)],

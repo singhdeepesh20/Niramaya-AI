@@ -13,5 +13,6 @@ class UserResponse(BaseModel):
 
     id: int
     name: str
+    username: str | None
     email: EmailStr
     created_at: datetime

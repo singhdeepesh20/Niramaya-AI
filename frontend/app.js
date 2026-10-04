@@ -360,6 +360,7 @@ function renderUser(user) {
   const fields = document.createElement('div');
   fields.className = 'result-fields';
   fields.append(createResultField('Email', user.email));
+  fields.append(createResultField('Username', user.username));
   fields.append(createResultField('Created', formatCreatedAt(user.created_at)));
 
   const actions = document.createElement('div');

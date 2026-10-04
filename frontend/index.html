@@ -108,7 +108,11 @@
                     <label for="name">Full name</label>
                     <input id="name" name="name" type="text" autocomplete="name" aria-describedby="create-note" placeholder="Your full name" minlength="1" maxlength="120" required />
                   </div>
-                  <div class="field-group">
+                  <div class="field-group" id="username-field">
+                    <label for="username">Username</label>
+                    <input id="username" name="username" type="text" autocomplete="username" aria-describedby="create-note" placeholder="e.g. deepesh_singh" minlength="3" maxlength="32" pattern="[A-Za-z0-9_.-]+" required />
+                  </div>
+                  <div class="field-group" id="email-field">
                     <label for="email">Email address</label>
                     <input id="email" name="email" type="email" autocomplete="username" aria-describedby="create-note" placeholder="name@example.com" maxlength="320" required />
                   </div>

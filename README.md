@@ -135,10 +135,10 @@ Alembic applies the versioned schema migration. `python -m app.db.init_db` remai
 ```bash
 curl -X POST http://127.0.0.1:8000/auth/register \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Deepesh","email":"deepesh@example.com","password":"a-long-unique-password"}'
+  -d '{"name":"Deepesh","username":"deepesh_singh","email":"deepesh@example.com","password":"a-long-unique-password"}'
 ```
 
-Passwords must contain 12–128 characters. They are stored as Argon2 hashes, never as plaintext. Duplicate emails return `409 Conflict`. To sign in, send form fields named `username` (the email) and `password` to `/auth/token`; use the returned token as `Authorization: Bearer <access_token>`.
+Usernames are 3–32 characters and may contain letters, numbers, dots, underscores, and hyphens. Matching ignores case. Passwords must contain 12–128 characters. They are stored as Argon2 hashes, never as plaintext. Duplicate usernames or emails return `409 Conflict`. To sign in, send form fields named `username` and `password` to `/auth/token`; use the returned token as `Authorization: Bearer <access_token>`.
 
 ### Fetch a user
 

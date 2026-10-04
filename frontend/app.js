@@ -259,10 +259,10 @@ logoutButton.addEventListener('click', () => {
 createForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearMessage(createMessage);
+  const formData = new FormData(createForm);
   setFormBusy(createForm, true);
   setButtonLoading(createButton, true, registering ? 'Creating account…' : 'Signing in…');
 
-  const formData = new FormData(createForm);
   const email = String(formData.get('email') || '').trim();
   const username = String(formData.get('username') || '').trim();
   const password = String(formData.get('password') || '');

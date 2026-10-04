@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.dependencies import get_current_user
 from app.core.security import create_access_token, hash_password, verify_password
+from app.core.identifiers import normalize_username
 from app.db.database import get_db
 from app.db.models import User
 from app.schemas.auth import TokenResponse, UserRegister
@@ -23,6 +24,11 @@ async def register(payload: UserRegister, db: Annotated[AsyncSession, Depends(ge
         existing = await db.scalar(select(User).where(User.email == email))
         if existing is not None:
             raise HTTPException(status_code=409, detail="An account with this email already exists")
+        existing_username = await db.scalar(
+            select(User).where(User.username == normalize_username(payload.username))
+        )
+        if existing_username is not None:
+            raise HTTPException(status_code=409, detail="This username is already taken")
         user = User(name=payload.name.strip(), email=email, password_hash=hash_password(payload.password))
         db.add(user)
         await db.commit()

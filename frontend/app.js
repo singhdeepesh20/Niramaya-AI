@@ -264,6 +264,7 @@ createForm.addEventListener('submit', async (event) => {
 
   const formData = new FormData(createForm);
   const email = String(formData.get('email') || '').trim();
+  const username = String(formData.get('username') || '').trim();
   const password = String(formData.get('password') || '');
 
   try {
@@ -271,7 +272,12 @@ createForm.addEventListener('submit', async (event) => {
       await requestJson('/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: String(formData.get('name') || '').trim(), email, password }),
+        body: JSON.stringify({
+          name: String(formData.get('name') || '').trim(),
+          username,
+          email,
+          password,
+        }),
       });
     }
     const token = await requestJson('/auth/token', {

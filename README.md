@@ -10,7 +10,7 @@ Niramaya-AI is a learning-stage backend prototype built with Python 3.12+, FastA
 
 - A FastAPI application with a same-origin HTML/CSS/JavaScript frontend.
 - Async SQLAlchemy database access using `AsyncSession` and the `asyncpg` driver.
-- A `users` table with an integer ID, name, unique email, and server-generated creation time.
+- A `users` table with an integer ID, unique username and email, password hash, and server-generated creation time.
 - Account registration and login with Argon2 password hashing and short-lived signed access tokens.
 - Current-user identity and self-only profile lookup endpoints.
 - Versioned schema migration for adding password hashes to existing user tables.
@@ -125,8 +125,8 @@ Alembic applies the versioned schema migration. `python -m app.db.init_db` remai
 | Method | Path | Purpose | Successful response |
 | --- | --- | --- | --- |
 | `GET` | `/health` | Check PostgreSQL connectivity | `200` with `{"status":"ok","database":"connected"}` |
-| `POST` | `/auth/register` | Register with name, email, and password | `201` with public profile fields |
-| `POST` | `/auth/token` | Exchange email and password for a bearer token | `200` with access token |
+| `POST` | `/auth/register` | Register with name, username, email, and password | `201` with public profile fields |
+| `POST` | `/auth/token` | Exchange username and password for a bearer token | `200` with access token |
 | `GET` | `/auth/me` | Read the authenticated account | `200` with public profile fields |
 | `GET` | `/users/{user_id}` | Fetch the authenticated user's own profile | `200` with public profile fields |
 

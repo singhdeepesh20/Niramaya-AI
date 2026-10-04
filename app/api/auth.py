@@ -29,7 +29,12 @@ async def register(payload: UserRegister, db: Annotated[AsyncSession, Depends(ge
         )
         if existing_username is not None:
             raise HTTPException(status_code=409, detail="This username is already taken")
-        user = User(name=payload.name.strip(), email=email, password_hash=hash_password(payload.password))
+        user = User(
+            name=payload.name.strip(),
+            username=normalize_username(payload.username),
+            email=email,
+            password_hash=hash_password(payload.password),
+        )
         db.add(user)
         await db.commit()
         await db.refresh(user)

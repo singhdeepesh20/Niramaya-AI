@@ -13,7 +13,7 @@ Niramaya-AI is a learning-stage backend prototype built with Python 3.12+, FastA
 - A `users` table with an integer ID, unique username and email, password hash, and server-generated creation time.
 - Account registration and login with Argon2 password hashing and short-lived signed access tokens.
 - Current-user identity and self-only profile lookup endpoints.
-- Versioned schema migration for adding password hashes to existing user tables.
+- Versioned schema migrations for adding password hashes and usernames to existing user tables.
 - A database-aware health endpoint and an explicit local table-initialization command.
 
 ## Architecture
@@ -159,7 +159,7 @@ The browser workspace is intentionally built with static HTML, CSS, and JavaScri
 - A service-health panel with checking, connected, and unavailable states plus a manual retry.
 - An opt-in 30-second health check that pauses while the browser tab is hidden, resumes when visible, and reports response time.
 - Light and dark themes that follow the operating-system preference by default and remember an explicit choice across visits and tabs.
-- A user creation form that shows request progress and places a successful profile ID into the lookup field.
+- A registration and sign-in form that uses a username and password and shows the authenticated profile.
 - A lookup card that renders profile details safely as text and offers copy-ID, share-link, JSON-download, and clear-result actions.
 - Shareable profile URLs using the `?user_id=` query parameter.
 - A project-status panel that identifies the current prototype boundaries and links to the API docs and OpenAPI schema.
@@ -173,7 +173,7 @@ This codebase is a local development foundation, not a deployment-ready healthca
 
 - **Authentication is foundational, not deployment complete.** Access tokens are signed with HS256, expire after 30 minutes by default, and are held in browser memory. Signing out clears the browser token; an issued token remains valid until it expires. There are no refresh/revocation tokens, rate limits, email verification, password reset, MFA, or security audit events.
 - **Use HTTPS and a strong secret.** Set `JWT_SECRET_KEY` from a secret manager in deployments. Do not reuse the database password or commit the key.
-- **The user model is only a demonstration.** It stores a name and email; it is not a patient model and has no consent, access-control, or audit trail.
+- **The user model is only a demonstration.** It stores a name, username, and email; it is not a patient model and has no consent, access-control, or audit trail.
 - **Do not use real patient or other sensitive personal data** with this prototype.
 - Keep real credentials in a local or deployment secret store. `.env` is ignored by Git; `.env.example` contains only a placeholder.
 - The local `create_all()` helper creates missing tables but does not version schema changes. Adopt Alembic migrations before maintaining production data.

@@ -43,7 +43,7 @@ async def register(payload: UserRegister, db: Annotated[AsyncSession, Depends(ge
         raise
     except IntegrityError as exc:
         await db.rollback()
-        raise HTTPException(status_code=409, detail="An account with this email already exists") from exc
+        raise HTTPException(status_code=409, detail="This email or username is already registered") from exc
     except SQLAlchemyError as exc:
         await db.rollback()
         raise HTTPException(status_code=500, detail="Database operation failed") from exc

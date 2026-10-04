@@ -283,7 +283,7 @@ createForm.addEventListener('submit', async (event) => {
     const token = await requestJson('/auth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ username: email, password }).toString(),
+      body: new URLSearchParams({ username, password }).toString(),
     });
     accessToken = token.access_token;
     const user = await requestJson('/auth/me');

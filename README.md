@@ -1,5 +1,7 @@
 # Niramaya-AI
 
+## Niramaya AI is an AI-powered platform that transforms scattered medical reports into a searchable, intelligent health record.
+
 **An asynchronous FastAPI and PostgreSQL foundation for a healthcare-oriented AI project.**
 
 Niramaya-AI is a learning-stage backend prototype built with Python 3.12+, FastAPI, SQLAlchemy's async API, asyncpg, and PostgreSQL. It currently demonstrates a small user-profile workflow and a browser interface on top of that API.

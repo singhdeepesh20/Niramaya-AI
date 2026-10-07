@@ -111,3 +111,34 @@ SQLAlchemy maps the user model to PostgreSQL. The asyncpg driver handles databas
 | Schema migrations | Alembic |
 | Browser interface | HTML, CSS, vanilla JavaScript |
 
+
+## Repository layout
+
+```text
+app/
+├── main.py                   # FastAPI app, routers, static UI, health endpoint
+├── api/
+│   ├── auth.py               # Registration, token, and current-user routes
+│   ├── dependencies.py       # Bearer token validation and user resolution
+│   └── users.py              # Authenticated profile route
+├── core/
+│   ├── config.py             # Environment-backed settings
+│   ├── identifiers.py        # Username normalization
+│   └── security.py           # Argon2 password and JWT helpers
+├── db/
+│   ├── database.py           # Async engine, session factory, request dependency
+│   ├── init_db.py            # Local create_all helper
+│   └── models.py             # SQLAlchemy user model
+└── schemas/                  # Pydantic request and response contracts
+alembic/
+├── env.py                    # Migration environment using async settings
+└── versions/                 # Versioned database changes
+frontend/
+├── index.html
+├── styles.css
+├── app.js
+└── favicon.svg
+.env.example                  # Safe local configuration template
+requirements.txt
+```
+

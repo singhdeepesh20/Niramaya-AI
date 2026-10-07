@@ -154,3 +154,14 @@ requirements.txt
 
 The commands below assume a local database named `niramaya` and a PostgreSQL role named `postgres`. Adjust them for your environment.
 
+
+### Create a development database
+
+If the database does not already exist, create it with:
+
+```bash
+createdb -h localhost -p 5432 -U postgres niramaya
+```
+
+You can also create the database using your preferred PostgreSQL administration tool. The application expects the database to be available before you apply migrations.
+

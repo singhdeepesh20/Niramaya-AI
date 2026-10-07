@@ -216,3 +216,20 @@ The migrations can create the users table on a fresh database, add the nullable 
 
 Use Alembic when evolving an existing database. The optional `python -m app.db.init_db` helper calls SQLAlchemy `create_all()` for local development and does not alter an existing table to match newer model fields.
 
+
+### Run the application
+
+Start the development server:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Open:
+
+- <http://127.0.0.1:8000/> for the browser interface.
+- <http://127.0.0.1:8000/docs> for interactive Swagger documentation.
+- <http://127.0.0.1:8000/health> for the database connectivity check.
+
+The UI and API share an origin, so a separate frontend server and CORS setup are not needed for local development.
+

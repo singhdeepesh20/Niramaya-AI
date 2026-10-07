@@ -64,3 +64,28 @@ flowchart LR
     Alembic[Alembic migrations<br/>alembic/] --> PostgreSQL
 ```
 
+
+### Authentication flow
+
+```mermaid
+sequenceDiagram
+    actor User
+    participant UI as Browser UI
+    participant API as FastAPI
+    participant Hash as Password hasher
+    participant DB as PostgreSQL
+    User->>UI: Register username, email, password
+    UI->>API: POST /auth/register
+    API->>Hash: Hash password with Argon2
+    API->>DB: Store profile and password hash
+    User->>UI: Sign in
+    UI->>API: POST /auth/token (username, password)
+    API->>DB: Find account by normalized username
+    API->>Hash: Verify submitted password
+    API-->>UI: Signed JWT access token
+    UI->>API: Protected request with Bearer token
+    API->>API: Validate signature and expiration
+    API->>DB: Load user identified by token subject
+    API-->>UI: Return authorized profile
+```
+

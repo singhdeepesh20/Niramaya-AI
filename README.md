@@ -40,3 +40,27 @@ The project does not include an AI model, clinical decision support, patient dat
 - Alembic tracks schema changes, including password hashes and usernames.
 - A health endpoint checks whether PostgreSQL can be reached.
 
+
+## Architecture
+
+The application keeps its main responsibilities in separate layers:
+
+```mermaid
+flowchart LR
+    Browser[Browser UI<br/>frontend/] -->|same-origin HTTP| FastAPI[FastAPI app<br/>app/main.py]
+    FastAPI --> Auth[Authentication router<br/>app/api/auth.py]
+    FastAPI --> Users[User router<br/>app/api/users.py]
+    Auth --> Schemas[Pydantic schemas<br/>app/schemas/]
+    Users --> Schemas
+    Auth --> Security[Password and JWT helpers<br/>app/core/security.py]
+    Auth --> Identity[Current-user dependency<br/>app/api/dependencies.py]
+    Users --> Identity
+    Identity --> Sessions[Async database session<br/>app/db/database.py]
+    Auth --> Sessions
+    Sessions --> Models[SQLAlchemy models<br/>app/db/models.py]
+    Models --> Driver[asyncpg]
+    Driver --> PostgreSQL[(PostgreSQL)]
+    Settings[Environment settings<br/>app/core/config.py] --> Sessions
+    Alembic[Alembic migrations<br/>alembic/] --> PostgreSQL
+```
+

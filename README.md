@@ -142,3 +142,15 @@ frontend/
 requirements.txt
 ```
 
+
+## Quick start
+
+### Prerequisites
+
+- Python 3.12 or newer.
+- PostgreSQL running locally.
+- A PostgreSQL role with permission to create and modify the application schema.
+- Git and a terminal.
+
+The commands below assume a local database named `niramaya` and a PostgreSQL role named `postgres`. Adjust them for your environment.
+

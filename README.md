@@ -165,3 +165,17 @@ createdb -h localhost -p 5432 -U postgres niramaya
 
 You can also create the database using your preferred PostgreSQL administration tool. The application expects the database to be available before you apply migrations.
 
+
+### Install dependencies
+
+From the repository root, create and activate a virtual environment, then install the pinned dependencies:
+
+```bash
+python3.12 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+On Windows PowerShell, activate the environment with `.venv\Scripts\Activate.ps1`.
+

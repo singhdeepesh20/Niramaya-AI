@@ -233,3 +233,16 @@ Open:
 
 The UI and API share an origin, so a separate frontend server and CORS setup are not needed for local development.
 
+
+## API reference
+
+| Method | Path | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Public | Check PostgreSQL connectivity |
+| `POST` | `/auth/register` | Public | Create an account |
+| `POST` | `/auth/token` | Public | Exchange username/password for a JWT |
+| `GET` | `/auth/me` | Bearer token | Read the signed-in account |
+| `GET` | `/users/{user_id}` | Bearer token | Read the signed-in user's own profile |
+
+Successful profile responses contain `id`, `name`, `username`, `email`, and `created_at`. Password hashes are never included in API responses.
+

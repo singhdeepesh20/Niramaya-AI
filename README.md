@@ -21,3 +21,10 @@ Niramaya-AI is a learning-stage application built with FastAPI, asynchronous SQL
 - [Contributing](#contributing)
 - [License](#license)
 
+
+## Project status
+
+This repository is a developer prototype. It demonstrates how a browser can call an asynchronous API, how the API can store users in PostgreSQL, and how bearer-token authentication can protect account data.
+
+The project does not include an AI model, clinical decision support, patient data storage, or production operations. Its authentication is a foundation for learning and local development, not a complete identity platform.
+

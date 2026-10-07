@@ -2,6 +2,8 @@
 
 **A Python backend foundation for a healthcare-oriented AI project.**
 
+**Long-term vision:** help people turn scattered medical reports into searchable, intelligent health records. AI features are not implemented in this repository.
+
 Niramaya-AI is a learning-stage application built with FastAPI, asynchronous SQLAlchemy, and PostgreSQL. It includes a small authenticated user-profile workflow and a same-origin browser interface.
 
 > **Current scope:** authentication, profile data, and database health checks are implemented. AI/ML inference, patient records, and clinical workflows are not. Do not enter real patient information or use this project to make clinical decisions.

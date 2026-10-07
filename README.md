@@ -179,3 +179,22 @@ python -m pip install -r requirements.txt
 
 On Windows PowerShell, activate the environment with `.venv\Scripts\Activate.ps1`.
 
+
+### Configure environment variables
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Set the database URL and JWT settings in `.env`:
+
+```env
+DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/niramaya
+JWT_SECRET_KEY=PASTE_A_RANDOM_SECRET_HERE
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+```
+
+Replace the database credentials locally. Generate a unique signing key with `openssl rand -hex 32`. Keep `.env` private; it is ignored by Git.
+

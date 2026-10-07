@@ -96,3 +96,18 @@ The browser sends JSON or form-encoded requests to FastAPI. Pydantic validates r
 
 SQLAlchemy maps the user model to PostgreSQL. The asyncpg driver handles database communication. Alembic applies versioned schema changes; the application does not run migrations automatically at startup.
 
+
+## Technology stack
+
+| Area | Technology |
+| --- | --- |
+| Runtime | Python 3.12+ |
+| HTTP API | FastAPI, Uvicorn |
+| Validation and configuration | Pydantic v2, pydantic-settings |
+| Authentication | PyJWT, OAuth2 bearer tokens |
+| Password hashing | pwdlib with Argon2 |
+| ORM and sessions | SQLAlchemy 2.x async API |
+| PostgreSQL driver | asyncpg |
+| Schema migrations | Alembic |
+| Browser interface | HTML, CSS, vanilla JavaScript |
+

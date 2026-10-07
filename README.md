@@ -198,3 +198,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 Replace the database credentials locally. Generate a unique signing key with `openssl rand -hex 32`. Keep `.env` private; it is ignored by Git.
 
+
+The application requires `DATABASE_URL` and `JWT_SECRET_KEY`. Token lifetime defaults to 30 minutes and can be configured from 1 to 1,440 minutes with `ACCESS_TOKEN_EXPIRE_MINUTES`.
+
+Use a different, randomly generated JWT key in each environment. Do not reuse the database password, put secrets in source code, or commit real `.env` files. For hosted deployments, provide secrets through the platform's secret manager.
+

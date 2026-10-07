@@ -203,3 +203,16 @@ The application requires `DATABASE_URL` and `JWT_SECRET_KEY`. Token lifetime def
 
 Use a different, randomly generated JWT key in each environment. Do not reuse the database password, put secrets in source code, or commit real `.env` files. For hosted deployments, provide secrets through the platform's secret manager.
 
+
+### Apply database migrations
+
+Run Alembic from the repository root:
+
+```bash
+alembic upgrade head
+```
+
+The migrations can create the users table on a fresh database, add the nullable password-hash column, and add/backfill usernames. Existing rows receive a unique username based on their email and row ID. Rows without a password hash still cannot sign in; account recovery is not implemented.
+
+Use Alembic when evolving an existing database. The optional `python -m app.db.init_db` helper calls SQLAlchemy `create_all()` for local development and does not alter an existing table to match newer model fields.
+

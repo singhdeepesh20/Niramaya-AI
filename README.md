@@ -273,3 +273,15 @@ curl -X POST http://127.0.0.1:8000/auth/token \
 
 The response contains `access_token` and `token_type`. Send the token in the `Authorization: Bearer <access_token>` header when calling a protected endpoint.
 
+
+### Access the signed-in profile
+
+Use the issued token to request the current account:
+
+```bash
+curl http://127.0.0.1:8000/auth/me \
+  -H 'Authorization: Bearer ACCESS_TOKEN'
+```
+
+The `/users/{user_id}` endpoint has the same authentication requirement and returns a profile only when the requested ID belongs to the signed-in user. Requests for another user's ID return `404`.
+

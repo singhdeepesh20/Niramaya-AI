@@ -246,3 +246,16 @@ The UI and API share an origin, so a separate frontend server and CORS setup are
 
 Successful profile responses contain `id`, `name`, `username`, `email`, and `created_at`. Password hashes are never included in API responses.
 
+
+### Register an account
+
+Send a JSON request to `POST /auth/register`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"name":"Example User","username":"example_user","email":"user@example.com","password":"Example-passphrase-123"}'
+```
+
+Usernames must be 3–32 characters and may contain letters, numbers, dots, underscores, and hyphens. Matching ignores case. Passwords must be 12–128 characters. Duplicate usernames or emails return `409 Conflict`.
+

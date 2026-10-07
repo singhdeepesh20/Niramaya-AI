@@ -21,13 +21,11 @@ Niramaya-AI is a learning-stage application built with FastAPI, asynchronous SQL
 - [Contributing](#contributing)
 - [License](#license)
 
-
 ## Project status
 
 This repository is a developer prototype. It demonstrates how a browser can call an asynchronous API, how the API can store users in PostgreSQL, and how bearer-token authentication can protect account data.
 
 The project does not include an AI model, clinical decision support, patient data storage, or production operations. Its authentication is a foundation for learning and local development, not a complete identity platform.
-
 
 ## Features
 
@@ -39,7 +37,6 @@ The project does not include an AI model, clinical decision support, patient dat
 - Protected endpoints resolve the token to a database user and limit profile reads to that user.
 - Alembic tracks schema changes, including password hashes and usernames.
 - A health endpoint checks whether PostgreSQL can be reached.
-
 
 ## Architecture
 
@@ -63,7 +60,6 @@ flowchart LR
     Settings[Environment settings<br/>app/core/config.py] --> Sessions
     Alembic[Alembic migrations<br/>alembic/] --> PostgreSQL
 ```
-
 
 ### Authentication flow
 
@@ -89,13 +85,11 @@ sequenceDiagram
     API-->>UI: Return authorized profile
 ```
 
-
 ### Request and data flow
 
 The browser sends JSON or form-encoded requests to FastAPI. Pydantic validates request bodies, and route handlers call narrowly scoped security and database helpers. The current-user dependency validates bearer tokens using a fixed HS256 algorithm, reads the user ID from the token subject, and loads that account through a request-scoped async session.
 
 SQLAlchemy maps the user model to PostgreSQL. The asyncpg driver handles database communication. Alembic applies versioned schema changes; the application does not run migrations automatically at startup.
-
 
 ## Technology stack
 
@@ -110,7 +104,6 @@ SQLAlchemy maps the user model to PostgreSQL. The asyncpg driver handles databas
 | PostgreSQL driver | asyncpg |
 | Schema migrations | Alembic |
 | Browser interface | HTML, CSS, vanilla JavaScript |
-
 
 ## Repository layout
 
@@ -142,7 +135,6 @@ frontend/
 requirements.txt
 ```
 
-
 ## Quick start
 
 ### Prerequisites
@@ -154,7 +146,6 @@ requirements.txt
 
 The commands below assume a local database named `niramaya` and a PostgreSQL role named `postgres`. Adjust them for your environment.
 
-
 ### Create a development database
 
 If the database does not already exist, create it with:
@@ -164,7 +155,6 @@ createdb -h localhost -p 5432 -U postgres niramaya
 ```
 
 You can also create the database using your preferred PostgreSQL administration tool. The application expects the database to be available before you apply migrations.
-
 
 ### Install dependencies
 
@@ -178,7 +168,6 @@ python -m pip install -r requirements.txt
 ```
 
 On Windows PowerShell, activate the environment with `.venv\Scripts\Activate.ps1`.
-
 
 ### Configure environment variables
 
@@ -198,11 +187,9 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 
 Replace the database credentials locally. Generate a unique signing key with `openssl rand -hex 32`. Keep `.env` private; it is ignored by Git.
 
-
 The application requires `DATABASE_URL` and `JWT_SECRET_KEY`. Token lifetime defaults to 30 minutes and can be configured from 1 to 1,440 minutes with `ACCESS_TOKEN_EXPIRE_MINUTES`.
 
 Use a different, randomly generated JWT key in each environment. Do not reuse the database password, put secrets in source code, or commit real `.env` files. For hosted deployments, provide secrets through the platform's secret manager.
-
 
 ### Apply database migrations
 
@@ -215,7 +202,6 @@ alembic upgrade head
 The migrations can create the users table on a fresh database, add the nullable password-hash column, and add/backfill usernames. Existing rows receive a unique username based on their email and row ID. Rows without a password hash still cannot sign in; account recovery is not implemented.
 
 Use Alembic when evolving an existing database. The optional `python -m app.db.init_db` helper calls SQLAlchemy `create_all()` for local development and does not alter an existing table to match newer model fields.
-
 
 ### Run the application
 
@@ -233,7 +219,6 @@ Open:
 
 The UI and API share an origin, so a separate frontend server and CORS setup are not needed for local development.
 
-
 ## API reference
 
 | Method | Path | Authentication | Purpose |
@@ -246,7 +231,6 @@ The UI and API share an origin, so a separate frontend server and CORS setup are
 
 Successful profile responses contain `id`, `name`, `username`, `email`, and `created_at`. Password hashes are never included in API responses.
 
-
 ### Register an account
 
 Send a JSON request to `POST /auth/register`:
@@ -258,7 +242,6 @@ curl -X POST http://127.0.0.1:8000/auth/register \
 ```
 
 Usernames must be 3–32 characters and may contain letters, numbers, dots, underscores, and hyphens. Matching ignores case. Passwords must be 12–128 characters. Duplicate usernames or emails return `409 Conflict`.
-
 
 ### Sign in and receive an access token
 
@@ -273,7 +256,6 @@ curl -X POST http://127.0.0.1:8000/auth/token \
 
 The response contains `access_token` and `token_type`. Send the token in the `Authorization: Bearer <access_token>` header when calling a protected endpoint.
 
-
 ### Access the signed-in profile
 
 Use the issued token to request the current account:
@@ -285,3 +267,35 @@ curl http://127.0.0.1:8000/auth/me \
 
 The `/users/{user_id}` endpoint has the same authentication requirement and returns a profile only when the requested ID belongs to the signed-in user. Requests for another user's ID return `404`.
 
+## Browser interface
+
+The static browser workspace provides a database health panel, account registration and sign-in, sign-out, and a view of the authenticated user's profile. It also includes responsive layouts, keyboard focus states, light and dark themes, health-check polling, and profile copy/export controls.
+
+The UI sends requests to `/health`, `/auth/register`, `/auth/token`, `/auth/me`, and `/users/{user_id}`. It keeps the access token in memory for the current tab. Reloading the page clears the token and requires another sign-in. A copied profile link does not grant another person access; the API only authorizes the profile owner.
+
+## Security and limitations
+
+This project is a local development foundation, not a deployment-ready identity or healthcare service.
+
+- Passwords are stored as Argon2 hashes, not plaintext.
+- JWTs use HS256, include an expiration, and identify the user through the token subject.
+- Browser sign-out clears the in-memory token, but does not revoke a token already issued. It remains usable until it expires.
+- There are no refresh or revocation tokens, rate limits, email verification, password reset, multi-factor authentication, or audit events.
+- Configure HTTPS and managed secrets before any deployment. Restrict database access and add operational logging, backups, and monitoring.
+- Do not submit real patient information or other sensitive personal data. The project has no patient-data controls, consent model, or clinical features.
+
+Database errors are returned without exposing connection strings or internal SQL. Deployment logging and alerting still need to be configured for operators.
+
+## Roadmap
+
+AI capabilities are not implemented. Possible future work includes stronger account recovery and authorization, consent and audit events, a separately deployable model-inference service, and evaluation of quality, privacy, bias, and failure behavior before any health-related use.
+
+Any clinical-facing feature would require appropriate domain, privacy, security, and regulatory review. Do not present future model output as diagnosis or treatment guidance without that work.
+
+## Contributing
+
+Keep changes focused, describe behavior changes, and update this README when setup or API behavior changes. Never include secrets, real personal data, or unapproved clinical data in commits, logs, or examples.
+
+## License
+
+This project is distributed under the MIT License. See [LICENSE](LICENSE).

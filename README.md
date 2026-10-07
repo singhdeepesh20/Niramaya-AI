@@ -259,3 +259,17 @@ curl -X POST http://127.0.0.1:8000/auth/register \
 
 Usernames must be 3–32 characters and may contain letters, numbers, dots, underscores, and hyphens. Matching ignores case. Passwords must be 12–128 characters. Duplicate usernames or emails return `409 Conflict`.
 
+
+### Sign in and receive an access token
+
+The token endpoint accepts OAuth2 form fields named `username` and `password`:
+
+```bash
+curl -X POST http://127.0.0.1:8000/auth/token \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode 'username=example_user' \
+  --data-urlencode 'password=Example-passphrase-123'
+```
+
+The response contains `access_token` and `token_type`. Send the token in the `Authorization: Bearer <access_token>` header when calling a protected endpoint.
+

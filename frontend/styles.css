@@ -1230,10 +1230,10 @@ main:focus-visible {
   }
 
   .hero h1 {
-    max-width: 480px;
+    max-width: 420px;
     margin-top: 16px;
-    font-size: clamp(34px, 9vw, 44px);
-    letter-spacing: -1.7px;
+    font-size: clamp(30px, 8vw, 40px);
+    letter-spacing: -1.4px;
   }
 
   .hero-description {

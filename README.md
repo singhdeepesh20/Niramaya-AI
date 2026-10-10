@@ -1,4 +1,4 @@
-# Niramaya-AI
+## Niramaya-AI
 
 **A Python backend foundation for a healthcare-oriented AI project.**
 

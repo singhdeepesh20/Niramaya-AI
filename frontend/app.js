@@ -1,6 +1,4 @@
 const REQUEST_TIMEOUT_MS = 10_000;
-// Keep bearer credentials in memory so they are cleared when this tab is closed or refreshed.
-let accessToken = null;
 
 class ApiError extends Error {
   constructor(message, status) {
@@ -28,11 +26,7 @@ async function requestJson(url, options = {}) {
     const response = await fetch(url, {
       ...options,
       signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        ...options.headers,
-      },
+      headers: { Accept: 'application/json', ...options.headers },
     });
     const contentType = response.headers.get('content-type') || '';
     const payload = contentType.includes('application/json')
@@ -224,74 +218,29 @@ const createForm = document.querySelector('#create-form');
 const createMessage = document.querySelector('#create-message');
 const createButton = createForm.querySelector('button[type="submit"]');
 const lookupIdInput = document.querySelector('#user-id');
-const authModeToggle = document.querySelector('#auth-mode-toggle');
-const logoutButton = document.querySelector('#logout-button');
-const nameField = document.querySelector('#name-field');
-const emailField = document.querySelector('#email-field');
-const emailInput = document.querySelector('#email');
-const usernameInput = document.querySelector('#username');
-const passwordInput = document.querySelector('#password');
-let registering = true;
-
-authModeToggle.addEventListener('click', () => {
-  registering = !registering;
-  nameField.hidden = !registering;
-  emailField.hidden = !registering;
-  emailInput.required = registering;
-  emailInput.disabled = !registering;
-  document.querySelector('#name').required = registering;
-  passwordInput.autocomplete = registering ? 'new-password' : 'current-password';
-  passwordInput.minLength = registering ? 12 : 1;
-  createForm.querySelector('.button-text').textContent = registering ? 'Create account' : 'Sign in';
-  authModeToggle.textContent = registering ? 'Already registered? Sign in' : 'New here? Create an account';
-  clearMessage(createMessage);
-});
-
-logoutButton.addEventListener('click', () => {
-  accessToken = null;
-  logoutButton.hidden = true;
-  lookupIdInput.value = '';
-  userResult.hidden = true;
-  currentUser = null;
-  showMessage(createMessage, 'Signed out. Sign in again to access your profile.', 'success');
-});
 
 createForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearMessage(createMessage);
-  const formData = new FormData(createForm);
   setFormBusy(createForm, true);
-  setButtonLoading(createButton, true, registering ? 'Creating account…' : 'Signing in…');
+  setButtonLoading(createButton, true, 'Creating profile…');
 
-  const email = String(formData.get('email') || '').trim();
-  const username = String(formData.get('username') || '').trim();
-  const password = String(formData.get('password') || '');
+  const formData = new FormData(createForm);
+  const body = {
+    name: String(formData.get('name') || '').trim(),
+    email: String(formData.get('email') || '').trim(),
+  };
 
   try {
-    if (registering) {
-      await requestJson('/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: String(formData.get('name') || '').trim(),
-          username,
-          email,
-          password,
-        }),
-      });
-    }
-    const token = await requestJson('/auth/token', {
+    const user = await requestJson('/users/', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({ username, password }).toString(),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
     });
-    accessToken = token.access_token;
-    const user = await requestJson('/auth/me');
-    showMessage(createMessage, `Signed in successfully. Profile ID: ${user.id}.`, 'success');
-    logoutButton.hidden = false;
+
+    showMessage(createMessage, `User created successfully. Profile ID: ${user.id}.`, 'success');
     createForm.reset();
     lookupIdInput.value = user.id;
-    renderUser(user);
   } catch (error) {
     showMessage(createMessage, error.message);
   } finally {
@@ -360,7 +309,6 @@ function renderUser(user) {
   const fields = document.createElement('div');
   fields.className = 'result-fields';
   fields.append(createResultField('Email', user.email));
-  fields.append(createResultField('Username', user.username));
   fields.append(createResultField('Created', formatCreatedAt(user.created_at)));
 
   const actions = document.createElement('div');

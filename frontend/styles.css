@@ -254,12 +254,10 @@ p {
 
 .hero h1 {
   margin: 18px 0 13px;
-  max-width: 620px;
-  font-size: clamp(32px, 4vw, 46px);
+  font-size: clamp(34px, 4.2vw, 48px);
   font-weight: 680;
-  letter-spacing: -1.8px;
+  letter-spacing: -2.1px;
   line-height: 1.11;
-  text-wrap: balance;
 }
 
 .hero h1 span {
@@ -1230,10 +1228,10 @@ main:focus-visible {
   }
 
   .hero h1 {
-    max-width: 420px;
+    max-width: 480px;
     margin-top: 16px;
-    font-size: clamp(30px, 8vw, 40px);
-    letter-spacing: -1.4px;
+    font-size: clamp(34px, 9vw, 44px);
+    letter-spacing: -1.7px;
   }
 
   .hero-description {

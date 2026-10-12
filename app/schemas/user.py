@@ -13,6 +13,5 @@ class UserResponse(BaseModel):
 
     id: int
     name: str
-    username: str
     email: EmailStr
     created_at: datetime

@@ -4,15 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f3f7f4" />
-    <meta name="description" content="Developer preview of the Niramaya AI medical system backend. AI and clinical features are not connected." />
-    <meta name="application-name" content="NIRMAYA AI: MEDICAL SYSTEM" />
-    <meta property="og:title" content="NIRMAYA AI: MEDICAL SYSTEM" />
-    <meta property="og:type" content="website" />
-    <meta property="og:description" content="A developer preview of the Niramaya AI medical system backend. AI features are not connected." />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="NIRMAYA AI: MEDICAL SYSTEM" />
-    <meta name="twitter:description" content="Developer preview of the Niramaya AI medical system backend. AI features are not connected." />
-    <title>NIRMAYA AI: MEDICAL SYSTEM</title>
+    <meta name="description" content="Niramaya-AI backend developer workspace preview." />
+    <title>Niramaya-AI | Developer workspace</title>
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/static/styles.css" />
     <script src="/static/app.js" defer></script>
@@ -21,17 +14,17 @@
     <div class="app-shell">
       <a class="skip-link" href="#main-content">Skip to main content</a>
       <header class="site-header">
-        <a class="brand" href="/" aria-label="Niramaya AI Medical System home">
+        <a class="brand" href="/" aria-label="Niramaya-AI developer workspace home">
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="0 0 32 32" fill="none">
               <path d="M7 22.5 16 7l9 15.5H7Z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" />
               <path d="M16 13v8m-4-4h8" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" />
             </svg>
           </span>
-          <span class="brand-name">NIRMAYA<span> AI</span></span>
+          <span class="brand-name">Niramaya<span>-AI</span></span>
         </a>
         <div class="header-actions">
-          <span class="environment-badge"><span class="environment-dot"></span>System preview</span>
+          <span class="environment-badge"><span class="environment-dot"></span>Developer preview</span>
           <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle dark theme" aria-pressed="false" title="Toggle dark theme">
             <svg class="theme-icon theme-icon-moon" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M16.7 12.1A7.2 7.2 0 0 1 7.9 3.3a7.4 7.4 0 1 0 8.8 8.8Z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" /></svg>
             <svg class="theme-icon theme-icon-sun" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="3.3" stroke="currentColor" stroke-width="1.5" /><path d="M10 1.8v2m0 12.4v2M18.2 10h-2M3.8 10h-2m14-5.8-1.4 1.4M5.6 14.4l-1.4 1.4m11.6 0-1.4-1.4M5.6 5.6 4.2 4.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" /></svg>
@@ -43,9 +36,9 @@
       <main id="main-content" tabindex="-1">
         <section class="hero" aria-labelledby="page-title">
           <div class="hero-copy">
-            <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true"></span> NIRMAYA AI · MEDICAL SYSTEM</p>
-            <h1 id="page-title" class="hero-title">NIRMAYA AI:<br /><span>MEDICAL SYSTEM</span></h1>
-            <p class="hero-description">A developer preview for secure accounts and backend services. Medical and AI features are not connected.</p>
+            <p class="eyebrow"><span class="eyebrow-mark" aria-hidden="true"></span> HEALTHCARE PLATFORM · DEVELOPER WORKSPACE</p>
+            <h1 id="page-title">A stronger foundation<br />for <span>connected care.</span></h1>
+            <p class="hero-description">Explore the Niramaya-AI backend foundation: async APIs, PostgreSQL connectivity, and a simple user profile workflow.</p>
           </div>
           <div class="hero-art" aria-hidden="true">
             <div class="orbit orbit-one"></div>
@@ -56,10 +49,10 @@
             <span class="orbit-node node-two"></span>
             <span class="orbit-node node-three"></span>
           </div>
-          <div class="hero-caption"><span class="caption-line"></span> Learning-stage prototype · No medical or AI features are connected</div>
+          <div class="hero-caption"><span class="caption-line"></span> A learning-stage prototype · AI features are not connected</div>
         </section>
 
-        <section class="workspace" aria-label="Niramaya AI Medical System developer preview tools">
+        <section class="workspace" aria-label="Backend developer tools">
           <div class="workspace-main">
             <section class="panel health-panel" aria-labelledby="health-title">
               <div class="panel-heading">
@@ -104,37 +97,27 @@
                     </span>
                     <div>
                       <p class="section-label">USER WORKFLOW</p>
-                      <h2 id="create-title">Your account</h2>
+                      <h2 id="create-title">Create a profile</h2>
                     </div>
                   </div>
                   <span class="panel-index">02</span>
                 </div>
-                <p class="panel-description">Register with a strong password or sign in to view your profile.</p>
+                <p class="panel-description">Create a basic user record in the connected database.</p>
                 <form id="create-form" class="form-stack">
-                  <div class="field-group" id="name-field">
+                  <div class="field-group">
                     <label for="name">Full name</label>
-                    <input id="name" name="name" type="text" autocomplete="name" aria-describedby="create-note" placeholder="Your full name" minlength="1" maxlength="120" required />
-                  </div>
-                  <div class="field-group" id="username-field">
-                    <label for="username">Username</label>
-                    <input id="username" name="username" type="text" autocomplete="username" aria-describedby="create-note" placeholder="e.g. deepesh_singh" minlength="3" maxlength="32" pattern="[A-Za-z0-9_.-]+" required />
-                  </div>
-                  <div class="field-group" id="email-field">
-                    <label for="email">Email address</label>
-                    <input id="email" name="email" type="email" autocomplete="username" aria-describedby="create-note" placeholder="name@example.com" maxlength="320" required />
+                    <input id="name" name="name" type="text" autocomplete="name" aria-describedby="create-note" placeholder="e.g. Deepesh Singh" minlength="1" maxlength="120" required />
                   </div>
                   <div class="field-group">
-                    <label for="password">Password</label>
-                    <input id="password" name="password" type="password" autocomplete="new-password" aria-describedby="create-note" minlength="12" maxlength="128" required />
+                    <label for="email">Email address</label>
+                    <input id="email" name="email" type="email" autocomplete="email" aria-describedby="create-note" placeholder="name@example.com" maxlength="320" required />
                   </div>
-                  <p class="field-hint" id="create-note">Usernames use letters, numbers, dots, underscores, or hyphens. Use a password of at least 12 characters.</p>
+                  <p class="field-hint" id="create-note">Use sample data only. This prototype does not authenticate users.</p>
                   <button class="button button-primary" type="submit">
-                    <span class="button-text">Create account</span>
+                    <span class="button-text">Create user</span>
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
                   </button>
                 </form>
-                <button class="button button-quiet" id="auth-mode-toggle" type="button">Already registered? Sign in</button>
-                <button class="button button-quiet" id="logout-button" type="button" hidden>Sign out</button>
                 <div class="form-message" id="create-message" role="status" aria-live="polite" hidden></div>
               </section>
 
@@ -157,7 +140,7 @@
                     <label for="user-id">User ID</label>
                     <input id="user-id" name="user_id" type="number" inputmode="numeric" min="1" step="1" aria-describedby="lookup-note" placeholder="Enter a user ID" required />
                   </div>
-                  <p class="field-hint" id="lookup-note">Only the signed-in account’s profile can be viewed.</p>
+                  <p class="field-hint" id="lookup-note">The ID is returned after a successful create request.</p>
                   <button class="button button-secondary" type="submit">
                     <span class="button-text">Search users</span>
                     <svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4 10h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -182,7 +165,7 @@
               </dl>
               <div class="notice-card">
                 <span class="notice-icon" aria-hidden="true">i</span>
-                <p><strong>Prototype environment</strong><br />Authentication is enabled. Clinical features are not. Do not enter patient information.</p>
+                <p><strong>Prototype environment</strong><br />This app has no authentication or clinical features. Do not enter patient information.</p>
               </div>
             </section>
 
@@ -197,7 +180,7 @@
       </main>
 
       <footer class="site-footer">
-        <span>© NIRMAYA AI: MEDICAL SYSTEM <span id="footer-year">2026</span> · Developer preview</span>
+        <span>© Niramaya-AI <span id="footer-year">2026</span> · Developer preview</span>
         <span class="footer-stack">FastAPI <i>·</i> SQLAlchemy <i>·</i> PostgreSQL</span>
       </footer>
     </div>

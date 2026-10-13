@@ -1,191 +1,261 @@
-## Niramaya-AI
+# Niramaya-AI Health Records API
 
-## Niramaya AI is an AI-powered platform that transforms scattered medical reports into a searchable, intelligent health record.
+This repository contains a modular FastAPI service for Niramaya-AI. It provides account authentication, user-scoped medical-record retrieval, citations, and a protected LLM question-answer endpoint.
 
-**An asynchronous FastAPI and PostgreSQL foundation for a healthcare-oriented AI project.**
-
-Niramaya-AI is a learning-stage backend prototype built with Python 3.12+, FastAPI, SQLAlchemy's async API, asyncpg, and PostgreSQL. It currently demonstrates a small user-profile workflow and a browser interface on top of that API.
-
-> **Project status:** this repository does not yet include an AI/ML model, authentication, patient records, or clinical functionality. It is not a medical product. Do not submit real patient information or use it to guide clinical decisions.
-
-## What is implemented
-
-- A FastAPI application with a same-origin HTML/CSS/JavaScript frontend.
-- Async SQLAlchemy database access using `AsyncSession` and the `asyncpg` driver.
-- A `users` table with an integer ID, name, unique email, and server-generated creation time.
-- User creation and lookup endpoints, with duplicate and missing-user responses.
-- A database-aware health endpoint and an explicit local table-initialization command.
+> This is a software foundation, not a clinical product or healthcare compliance certification. Review data handling and clinical safety before using real patient information.
 
 ## Architecture
 
 ```mermaid
-flowchart TD
-    Browser[Browser UI<br/>frontend/] -->|HTTP| App[FastAPI app<br/>app/main.py]
-    App --> Router[Users router<br/>app/api/users.py]
-    Router --> Schema[Pydantic schemas<br/>app/schemas/user.py]
-    Router -->|Depends get_db| Session[AsyncSession]
-    Session --> ORM[SQLAlchemy model and queries]
-    ORM --> Driver[asyncpg]
-    Driver --> DB[(PostgreSQL)]
-    Config[.env settings<br/>app/core/config.py] --> Engine[Async engine and pool]
-    Engine --> Session
-    Init[Local table initializer<br/>app/db/init_db.py] --> ORM
+flowchart LR
+    Client[API client or browser] -->|JSON and Bearer token| API[FastAPI<br/>app/main.py]
+    API --> Router[User routes<br/>app/user/router.py]
+    Router --> Controller[Auth and user logic<br/>app/user/controller.py]
+    Controller --> DTO[Pydantic contracts<br/>app/user/dtos.py]
+    Controller --> Hash[Argon2id password hashing]
+    Controller --> JWT[HS256 JWT signing and verification]
+    Controller --> Session[Async SQLAlchemy session<br/>app/database.py]
+    Session --> Model[User ORM model<br/>app/user/models.py]
+    Model --> Postgres[(PostgreSQL)]
+    Settings[Validated environment settings<br/>app/core/config.py] --> API
+    Settings --> Session
+    Migrations[Alembic migrations] --> Postgres
+    Health[Protected health Q&A] --> Retrieval[Owner-filtered retrieval]
+    Retrieval --> Postgres
+    Retrieval --> Qdrant[(Qdrant<br/>required user_id filter)]
+    Retrieval --> Verify[PostgreSQL owner recheck]
+    Verify --> LLM[Configured LLM<br/>authorized evidence only]
+    LLM --> Health
 ```
 
-The frontend calls the FastAPI routes. FastAPI validates request and response data with Pydantic; dependency injection supplies one async database session for the request. SQLAlchemy maps Python objects and queries to database operations, while asyncpg carries PostgreSQL protocol traffic to the database.
+Registration validates and normalizes identifiers, hashes the password, and writes the account in a transaction. Login performs Argon2 verification before issuing a token. The `/me` dependency validates the signature and required claims, then resolves the UUID subject against the database and checks account status. Responses use a public DTO that has no password-hash field.
 
-## Technology
-
-| Area | Technology |
-| --- | --- |
-| Runtime | Python 3.12+ |
-| API | FastAPI, Uvicorn |
-| Validation and settings | Pydantic v2, pydantic-settings |
-| Database layer | SQLAlchemy 2.x async API, `AsyncSession` |
-| PostgreSQL driver | asyncpg |
-| Database | PostgreSQL |
-| Browser interface | HTML, CSS, vanilla JavaScript |
-
-## Repository layout
+## Project structure
 
 ```text
 app/
-├── main.py             # FastAPI application, frontend mount, health endpoint
-├── core/config.py      # Environment-backed settings
-├── db/
-│   ├── database.py     # Async engine, pool, session factory, request dependency
-│   ├── models.py       # SQLAlchemy declarative models
-│   └── init_db.py      # Explicit local table creation
-├── api/users.py        # User HTTP endpoints
-└── schemas/user.py    # Pydantic request and response models
-frontend/
-├── index.html
-├── styles.css
-├── app.js
-└── favicon.svg
-.env.example            # Safe local configuration template
-requirements.txt
+├── main.py                 # App factory, middleware, errors, health endpoint
+├── database.py             # Async engine, session factory, Base, request dependency
+├── core/
+│   ├── config.py            # Validated environment settings
+│   ├── errors.py            # Safe application error type
+│   ├── rate_limit.py        # Login rate-limiter integration
+│   └── security.py          # Argon2 and JWT helpers
+├── user/
+    ├── controller.py        # Registration, login, current-user resolution
+    ├── dtos.py              # Validated request and safe response schemas
+    ├── models.py            # SQLAlchemy User model
+    └── router.py            # Versioned HTTP endpoints
+└── health/
+    ├── assistant.py         # OpenAI-compatible LLM and filtered Qdrant client
+    ├── dtos.py              # Question, citation, evidence, history contracts
+    ├── models.py            # Documents, chunks, entities, scoped chat history
+    ├── repository.py        # PostgreSQL owner filters, RLS identity, hybrid search
+    └── router.py            # Protected ask/history/document routes
+alembic/                     # Versioned database schema changes
+tests/                       # Isolated API tests using temporary SQLite databases
+frontend/                    # Next.js App Router authentication UI
+├── app/login/page.tsx        # Login route
+├── app/register/page.tsx     # Registration route
+├── components/               # Shared auth layout and controls
+└── lib/api.ts                # Typed FastAPI client
 ```
 
-## Quick start
+The database module is at `app/database.py` as requested. The app factory does not create or alter tables at startup; use Alembic for schema changes.
 
-### Prerequisites
+## Requirements
 
 - Python 3.12 or newer.
-- PostgreSQL running locally and a role that can create databases.
+- PostgreSQL for development/deployment.
+- A PostgreSQL database and a role allowed to create and update the schema.
 
-Create the development database if it does not already exist:
-
-```bash
-createdb -h localhost -p 5432 -U postgres niramaya
-```
-
-### Install and configure
-
-Run these commands from the repository root:
+## Install and configure
 
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 cp .env.example .env
 ```
 
-Set `DATABASE_URL` in `.env` to match your local PostgreSQL credentials:
-
-```env
-DATABASE_URL=postgresql+asyncpg://postgres:YOUR_PASSWORD@localhost:5432/niramaya
-```
-
-Replace `YOUR_PASSWORD` locally. The URL uses the SQLAlchemy `postgresql` dialect with the async `asyncpg` driver. Never commit `.env` or place credentials in source code.
-
-### Initialize and run
+Edit `.env`. Set `DATABASE_URL` to the PostgreSQL async driver URL and generate a unique JWT key:
 
 ```bash
-python -m app.db.init_db
+openssl rand -hex 32
+```
+
+Use the generated value for `JWT_SECRET_KEY`. Do not commit `.env`. The example file intentionally contains a placeholder and will fail the strong-secret validation until replaced.
+
+Example configuration:
+
+```env
+DATABASE_URL=postgresql+psycopg://niramaya_app:YOUR_PASSWORD@localhost:5432/niramayaai
+JWT_SECRET_KEY=YOUR_GENERATED_64_CHARACTER_HEX_SECRET
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+JWT_ISSUER=https://api.example.com
+JWT_AUDIENCE=niramaya-clients
+FRONTEND_ORIGINS=["https://app.example.com"]
+```
+
+Issuer and audience may be left blank for local development. When configured, they are included in issued tokens and checked during verification. `FRONTEND_ORIGINS` is a JSON array of explicit origins; an empty array disables cross-origin browser access.
+
+Configure the following optional settings to enable semantic retrieval and answer generation:
+
+```env
+LLM_API_BASE_URL=https://api.openai.com/v1
+LLM_API_KEY=YOUR_PROVIDER_SECRET
+LLM_MODEL=gpt-4o-mini
+EMBEDDING_MODEL=text-embedding-3-small
+LLM_TIMEOUT_SECONDS=20
+QDRANT_URL=https://your-qdrant-host
+QDRANT_API_KEY=YOUR_QDRANT_SECRET
+QDRANT_COLLECTION=niramaya_medical_chunks
+HEALTH_RETRIEVAL_LIMIT=8
+HEALTH_CANDIDATE_LIMIT=30
+```
+
+Qdrant is optional; PostgreSQL full-text search remains available if it is not configured or is temporarily unavailable. LLM generation requires `LLM_API_KEY`. The configured provider receives the question and only authorized excerpts selected by the backend. Review the provider's data-handling terms and deployment before sending sensitive records.
+
+## Database migration and run
+
+Create the local database if needed, then apply the schema:
+
+```bash
+createdb -h localhost -p 5432 -U postgres niramayaai
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Open <http://127.0.0.1:8000/> for the browser interface or <http://127.0.0.1:8000/docs> for interactive API documentation. If the database already exists, skip `createdb`; run the initializer after configuring `.env`.
+Migrations create the account and user-scoped medical record tables. The application never runs `create_all()` or migration DDL on startup. Migration `0002_user_scoped_health` enables and forces PostgreSQL Row-Level Security on health documents, entities, chunks, and chat history. Each query also includes an explicit owner filter and sets transaction-local `app.current_user_id` from the verified JWT. Use a dedicated runtime database role with `NOSUPERUSER NOBYPASSRLS`; do not run the API as PostgreSQL's `postgres` superuser. Apply migrations with a separate schema-owner role, then grant the runtime role only the required table permissions. PostgreSQL superusers can bypass RLS.
 
-The initializer uses SQLAlchemy `create_all()` for local development only. It does not run on application startup or per request. Use Alembic migrations to evolve schemas in a deployed environment.
+Open <http://127.0.0.1:8000/docs> to inspect the API in Swagger UI. Health is available at <http://127.0.0.1:8000/health>.
 
-## API reference
+## Authentication frontend
 
-| Method | Path | Purpose | Successful response |
+The Next.js frontend lives in `frontend/` so its App Router `app/` does not collide with the Python backend package. Start it separately after starting the API:
+
+```bash
+cd frontend
+npm ci
+cp .env.example .env.local
+npm run dev
+```
+
+Open <http://localhost:3000/login> or <http://localhost:3000/register>. Set `NEXT_PUBLIC_API_BASE_URL` in `frontend/.env.local` when the API is not at `http://localhost:8000`. The API's `FRONTEND_ORIGINS` must include the exact frontend origin for browser requests.
+
+The UI follows the API's actual request schemas: registration accepts username, email, and password; login accepts username and password. The UI does not collect full name, phone number, or role because the current backend does not store or validate those fields. After login the bearer token is kept in `sessionStorage` for the current browser tab and `/api/v1/users/me` verifies the profile. This has more exposure to injected JavaScript than a backend-managed `HttpOnly` cookie; the API currently does not implement that cookie flow. Google sign-in is visibly disabled, and the Terms and Privacy routes state that the documents are not published yet.
+
+## API
+
+All authentication routes are under `/api/v1/users`.
+
+| Method | Endpoint | Auth | Purpose |
 | --- | --- | --- | --- |
-| `GET` | `/health` | Check PostgreSQL connectivity | `200` with `{"status":"ok","database":"connected"}` |
-| `POST` | `/users/` | Create a user | `201` with the created user |
-| `GET` | `/users/{user_id}` | Fetch a user by numeric ID | `200` with the user |
+| `POST` | `/api/v1/users/register` | Public | Register an account |
+| `POST` | `/api/v1/users/login` | Public | Verify credentials and issue a JWT |
+| `GET` | `/api/v1/users/me` | Bearer JWT | Return the authenticated user's safe profile |
+| `GET` | `/health` | Public | Check database availability |
+| `POST` | `/api/v1/health/ask` | Bearer JWT | Retrieve authorized records and answer a question |
+| `GET` | `/api/v1/health/history` | Bearer JWT | List the signed-in user's Q&A history |
+| `GET` | `/api/v1/health/documents/{document_id}` | Bearer JWT | Read authorized document metadata |
 
-### Create a user
+![Niramaya-AI secure health question workflow](docs/health-qa-workflow.svg)
+
+### Ask about health records
 
 ```bash
-curl -X POST http://127.0.0.1:8000/users/ \
+curl -i http://127.0.0.1:8000/api/v1/health/ask \
+  -H 'Authorization: Bearer ACCESS_TOKEN' \
   -H 'Content-Type: application/json' \
-  -d '{"name":"Deepesh","email":"deepesh@example.com"}'
+  -d '{"question":"What was my latest hemoglobin level?","document_types":["lab_report"],"date_from":"2024-01-01"}'
 ```
 
-The request body is validated before database work. A successful response includes the generated `id` and `created_at` values. Submitting an email that already exists returns `409 Conflict`.
+The request accepts `question` and optional `document_types`, `date_from`, `date_to`, and `document_ids`. Extra fields such as `user_id` are rejected. The user identity comes only from the verified JWT. PostgreSQL performs lexical full-text ranking (tests on SQLite use token matching). Semantic retrieval uses Qdrant with a server-generated mandatory `user_id` filter. Qdrant results are untrusted chunk IDs: PostgreSQL re-fetches each chunk joined to its document under explicit owner and metadata filters before any text reaches the LLM. Reciprocal rank fusion combines semantic and lexical results.
 
-### Fetch a user
+Qdrant points should use the medical chunk UUID as point ID (or include it as payload `chunk_id`) and carry `user_id`, `document_id`, `document_type`, and `document_date_epoch` (UTC Unix seconds). The implementation sends a filtered Qdrant query using its [query-points API](https://api.qdrant.tech/api-reference/search/query-points/). Original files are represented by `object_key`; an upload/object-storage ingestion pipeline is outside this feature.
 
-Use the ID returned by the create request:
+Responses include the answer, server-built citations (document ID, name, and page), and relevant evidence excerpts. Empty retrieval returns a clear no-record answer without calling the LLM. Report text is treated as untrusted data; the prompt tells the model to ignore embedded instructions, no tools are exposed, and it is told not to invent facts or values. Q&A history is stored under the owning user and the history route filters on that verified user.
+
+Qdrant outages fall back to PostgreSQL search. Database failures return safe `503` errors; LLM timeouts return `504`, and other provider failures return generic `503`. Provider logs contain exception types only, never questions, excerpts, credentials, or model responses. The ask rate limiter is process-local; use shared rate limiting for multiple workers.
+
+### Register
 
 ```bash
-curl http://127.0.0.1:8000/users/1
+curl -i http://127.0.0.1:8000/api/v1/users/register \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"deepesh","email":"deepesh@example.com","password":"StrongExamplePassword123!"}'
 ```
 
-An unknown ID returns `404 Not Found`. Invalid request data returns `422 Unprocessable Entity`. Unexpected database failures return a generic error response; internal SQL and credentials are not included in API error messages. If PostgreSQL is unavailable, `GET /health` returns `503 Service Unavailable`.
+Success returns `201` and public fields only: `id`, `username`, `email`, `is_active`, `created_at`, and `updated_at`. It never returns `hashed_password` or the submitted password.
 
-The browser UI at `/` offers the same health, create, and lookup workflows. It calls these same-origin endpoints, so a separate frontend development server and CORS configuration are not required.
+### Login
 
-## Frontend workspace
+```bash
+curl -i http://127.0.0.1:8000/api/v1/users/login \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"deepesh","password":"StrongExamplePassword123!"}'
+```
 
-The browser workspace is intentionally built with static HTML, CSS, and JavaScript. It includes:
+Success returns `200` with `access_token`, `token_type`, and `expires_in` in seconds. The browser UI keeps this bearer token in tab-scoped `sessionStorage`; this is a deliberate compatibility choice for the current bearer-token API, not an XSS-resistant token vault.
 
-- A service-health panel with checking, connected, and unavailable states plus a manual retry.
-- An opt-in 30-second health check that pauses while the browser tab is hidden, resumes when visible, and reports response time.
-- Light and dark themes that follow the operating-system preference by default and remember an explicit choice across visits and tabs.
-- A user creation form that shows request progress and places a successful profile ID into the lookup field.
-- A lookup card that renders profile details safely as text and offers copy-ID, share-link, JSON-download, and clear-result actions.
-- Shareable profile URLs using the `?user_id=` query parameter.
-- A project-status panel that identifies the current prototype boundaries and links to the API docs and OpenAPI schema.
-- Responsive layouts, keyboard skip navigation, visible focus states, reduced-motion support, and live status announcements.
+### Current user
 
-The UI sends same-origin requests to `/health` and `/users/`. Requests time out after ten seconds and display concise, user-facing errors. No browser-side secrets or external font services are required.
+```bash
+curl -i http://127.0.0.1:8000/api/v1/users/me \
+  -H 'Authorization: Bearer ACCESS_TOKEN'
+```
 
-## Security and deployment status
+The authenticated identity comes exclusively from the verified JWT subject. The endpoint does not accept a caller-supplied user ID.
 
-This codebase is a local development foundation, not a deployment-ready healthcare service.
+## Validation and error responses
 
-- **Authentication and authorization are not implemented.** The user endpoints are currently public to anyone who can reach the app. Do not expose them to the internet as-is.
-- **The user model is only a demonstration.** It stores a name and email; it is not a patient model and has no consent, access-control, or audit trail.
-- **Do not use real patient or other sensitive personal data** with this prototype.
-- Keep real credentials in a local or deployment secret store. `.env` is ignored by Git; `.env.example` contains only a placeholder.
-- The local `create_all()` helper creates missing tables but does not version schema changes. Adopt Alembic migrations before maintaining production data.
-- Configure HTTPS, restricted database access, managed secrets, logging, backups, and operational monitoring before any deployment.
+- Usernames are trimmed, lowercased, 3–30 characters, and limited to ASCII letters, digits, and underscores.
+- Emails are trimmed, validated, and lowercased before storage.
+- Passwords are 12–128 characters; they are not trimmed or silently changed.
+- Duplicate username/email: `409`.
+- Incorrect username/password: generic `401`.
+- Missing, invalid, tampered, or expired token: `401` with `WWW-Authenticate: Bearer`.
+- Inactive account: `403`.
+- Invalid request: `422`.
+- Database connection failure: `503`.
+- Unexpected failures return a generic `500` response with a request ID.
 
-Database exceptions are translated into generic HTTP errors so the API response does not expose connection strings or internal SQL details. Production logging and alerting still need to be configured for operators to diagnose failures safely.
+Errors use a structured body such as `{"error":{"code":"invalid_credentials","message":"Incorrect username or password.","request_id":"..."}}`. Validation responses omit submitted values, so passwords are not echoed. Database URLs, SQL messages, and secrets are not returned or logged.
 
-## AI roadmap
+## Security notes and deployment boundary
 
-The repository name describes the intended direction; AI capabilities are **not implemented yet**. Any future AI work should be added as a separate, reviewable service boundary rather than running model inference inside the HTTP route handlers.
+- `pwdlib`'s recommended hasher uses Argon2id. JWT uses an explicitly allowed HS256 algorithm and requires `sub`, `iat`, and `exp`. Issuer and audience are verified when configured.
+- A process-local sliding-window limiter allows 10 login attempts per client IP per 60 seconds. For multiple workers or hosts, replace it with a shared Redis or gateway-backed limiter before deployment.
+- Configure HTTPS, strong environment-managed secrets, restricted database access, monitoring, backups, and security logging before public deployment.
+- CORS only allows configured origins and does not enable credentials. The API uses bearer headers, not cookies. Secure `HttpOnly`, `SameSite` cookies reduce JavaScript token exposure but require CSRF defenses; bearer tokens are easier for API clients but must not be persisted in browser storage.
+- Authentication answers who the caller is; authorization determines what they can access. This implementation only exposes the caller's own profile. It does not implement roles, medical-document permissions, account recovery, email verification, refresh/revocation tokens, MFA, or audit trails.
+- Health retrieval currently allows owner-only document access; it does not implement document sharing or delegated access. Composite foreign keys ensure a chunk/entity owner matches its document owner. RLS is additional defense, while application filters remain mandatory.
+- Request IDs are returned in `X-Request-ID` and safe error bodies. Logs include request ID and exception type only, never request bodies, tokens, passwords, SQL text, or database URLs.
 
-Potential milestones:
+This code is an educational authentication module, not a certification of production readiness for a healthcare environment. Obtain an application-specific security and privacy review before handling sensitive information.
 
-1. Add authentication, authorization, consent, and audit events before storing sensitive records.
-2. Design a data model and document-ingestion workflow with validation, access controls, and retention rules.
-3. Add an independently deployable model or inference adapter with explicit input/output schemas and timeouts.
-4. Evaluate model quality, privacy, bias, and failure behavior on representative, approved data before release.
-5. Add monitoring, versioned prompts/models, human review, and clear user-facing limits for any health-related output.
+## Tests
 
-Any future clinical-facing feature would require appropriate domain, privacy, security, and regulatory review. It must not be presented as a diagnostic or treatment tool without that work.
+Tests use a temporary SQLite database per test and never connect to the configured PostgreSQL database:
 
-## Contributing
+```bash
+python -m pytest
+```
 
-Keep pull requests focused, describe the behavior being changed, and update this README when setup steps or API behavior change. Never include secrets, real personal data, or unapproved clinical data in commits, logs, or examples.
+Coverage includes authentication, registration validation, password handling, JWT verification, and health retrieval isolation with two users. The isolation tests cover keyword and vector results, metadata filters, direct document access, chat history, forged request `user_id`, and hostile vector results. Tests use a temporary SQLite database; PostgreSQL RLS and live provider integrations require separate environment-level verification.
+
+## Swagger verification checklist
+
+1. Start the API and open `/docs`.
+2. Register a valid username, email, and password at `POST /api/v1/users/register`; confirm status `201` and no password hash in the response.
+3. Register the same normalized username or email again; confirm status `409`.
+4. Sign in at `POST /api/v1/users/login`; confirm status `200` and an expiry value.
+5. Click **Authorize**, enter `Bearer <access_token>`, and call `GET /api/v1/users/me`.
+6. Clear authorization or use an expired token; confirm status `401`.
+7. Stop PostgreSQL and call `/health`; confirm a safe `503` response.
 
 ## License
 
-This project is distributed under the MIT License. See [`LICENSE`](LICENSE).
+This project is distributed under the MIT License. See [LICENSE](LICENSE).

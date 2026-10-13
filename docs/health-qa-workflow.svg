@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="960" viewBox="0 0 1440 960" role="img" aria-labelledby="title desc">
+  <title id="title">Niramaya-AI secure health question workflow</title>
+  <desc id="desc">Documents are processed into private PostgreSQL and Qdrant records. A signed-in user's question searches only records tagged to that user. The backend checks ownership again before sending evidence to the language model, then returns cited answers and stores chat history for that user.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#effaf6"/><stop offset="1" stop-color="#f3f8fc"/></linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#087565"/><stop offset="1" stop-color="#075748"/></linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%"><feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#173f4d" flood-opacity=".09"/></filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto"><path d="M0 0 0 6 8 3z" fill="#6da79c"/></marker>
+    <style>
+      .head{font:700 34px system-ui,-apple-system,Segoe UI,sans-serif;fill:#12384a}.sub{font:400 16px system-ui,-apple-system,Segoe UI,sans-serif;fill:#607c89}.label{font:700 17px system-ui,-apple-system,Segoe UI,sans-serif;fill:#173d4e}.body{font:400 13px system-ui,-apple-system,Segoe UI,sans-serif;fill:#66818d}.small{font:600 11px system-ui,-apple-system,Segoe UI,sans-serif;fill:#31796d}.num{font:700 13px system-ui,-apple-system,Segoe UI,sans-serif;fill:white}.box{fill:white;stroke:#d5e7e3;stroke-width:1.5;rx:17;filter:url(#shadow)}.line{stroke:#78aaa0;stroke-width:2.3;fill:none;marker-end:url(#arrow)}.icon{fill:#e4f6f1;stroke:#c5e6dd}.green{fill:#086b5b}.white{fill:white}.accent{fill:#eaf4fb;stroke:#d5e6ee}.warn{fill:#fff7e8;stroke:#f1dfbc}
+    </style>
+  </defs>
+  <rect width="1440" height="960" rx="24" fill="url(#bg)"/>
+  <text x="72" y="74" class="head">How Niramaya-AI answers a health question</text>
+  <text x="72" y="105" class="sub">The signed-in user's identity sets the boundary at every search step.</text>
+
+  <rect x="72" y="140" width="1296" height="180" rx="22" fill="#e7f5f1" stroke="#cce7de"/>
+  <text x="100" y="176" class="small">DOCUMENT SETUP · DONE WHEN RECORDS ARE ADDED</text>
+  <rect x="105" y="199" width="235" height="86" rx="14" class="box"/>
+  <circle cx="140" cy="242" r="21" class="icon"/><path d="M132 241h16m-8-8v16" stroke="#087565" stroke-width="2" stroke-linecap="round"/>
+  <text x="174" y="235" class="label">Medical report</text><text x="174" y="258" class="body">Original file</text>
+  <path d="M345 242h74" class="line"/>
+  <rect x="430" y="199" width="300" height="86" rx="14" class="box"/>
+  <circle cx="468" cy="242" r="21" class="icon"/><path d="M460 234h16v16h-16zM463 239h10m-10 4h8" fill="none" stroke="#087565" stroke-width="1.7"/>
+  <text x="502" y="235" class="label">Extract text &amp; values</text><text x="502" y="258" class="body">Keep owner and page metadata</text>
+  <path d="M735 242h64" class="line"/>
+  <rect x="810" y="199" width="260" height="86" rx="14" class="box"/>
+  <circle cx="848" cy="242" r="21" class="icon"/><ellipse cx="848" cy="237" rx="9" ry="4" fill="none" stroke="#087565" stroke-width="1.7"/><path d="M839 237v10c0 5 18 5 18 0v-10m-18 5c0 5 18 5 18 0" fill="none" stroke="#087565" stroke-width="1.7"/>
+  <text x="881" y="235" class="label">PostgreSQL</text><text x="881" y="258" class="body">Documents, entities, chunks</text>
+  <path d="M1076 242h62" class="line"/>
+  <rect x="1150" y="199" width="184" height="86" rx="14" class="box"/>
+  <circle cx="1188" cy="242" r="21" class="accent"/><circle cx="1184" cy="239" r="4" fill="none" stroke="#4b82a2" stroke-width="1.8"/><circle cx="1194" cy="246" r="4" fill="none" stroke="#4b82a2" stroke-width="1.8"/>
+  <text x="1220" y="235" class="label">Qdrant</text><text x="1220" y="258" class="body">Vectors + owner ID</text>
+
+  <text x="72" y="372" class="small">QUESTION FLOW · EACH STEP USES THE VERIFIED USER ID</text>
+  <rect x="72" y="407" width="214" height="124" rx="17" class="box"/>
+  <circle cx="108" cy="447" r="21" class="icon"/><path d="M99 447h18m-9-9 9 9-9 9" fill="none" stroke="#087565" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="140" y="444" class="label">1. Ask</text><text x="96" y="482" class="body">“What was my latest</text><text x="96" y="502" class="body">hemoglobin level?”</text>
+
+  <path d="M292 469h45" class="line"/>
+  <rect x="350" y="407" width="218" height="124" rx="17" class="box"/>
+  <circle cx="386" cy="447" r="21" class="icon"/><path d="M386 435l11 4v8c0 8-11 13-11 13s-11-5-11-13v-8z" fill="none" stroke="#087565" stroke-width="1.8"/><path d="m381 447 4 4 7-8" fill="none" stroke="#087565" stroke-width="1.8"/>
+  <text x="418" y="444" class="label">2. Verify identity</text><text x="374" y="482" class="body">JWT → current user</text><text x="374" y="502" class="small">user_id comes from token</text>
+
+  <path d="M574 469h46" class="line"/>
+  <rect x="633" y="393" width="340" height="152" rx="18" fill="#f5fbfa" stroke="#b7ddd2" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="657" y="422" class="label">3. Search with required filters</text>
+  <rect x="657" y="440" width="137" height="77" rx="12" class="box"/><text x="675" y="467" class="small">PostgreSQL</text><text x="675" y="489" class="body">WHERE user_id =</text><text x="675" y="506" class="label" style="font-size:12px">verified user</text>
+  <rect x="810" y="440" width="139" height="77" rx="12" class="box"/><text x="828" y="467" class="small">Qdrant</text><text x="828" y="489" class="body">must match</text><text x="828" y="506" class="label" style="font-size:12px">verified user</text>
+
+  <path d="M979 469h47" class="line"/>
+  <rect x="1039" y="407" width="260" height="124" rx="17" fill="#fff" stroke="#b8d9cf" stroke-width="2" filter="url(#shadow)"/>
+  <circle cx="1075" cy="447" r="21" class="icon"/><path d="m1066 447 6 6 12-13" fill="none" stroke="#087565" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="1107" y="444" class="label">4. Check ownership</text><text x="1062" y="482" class="body">Recheck chunk + document</text><text x="1062" y="502" class="small">before text reaches the LLM</text>
+
+  <path d="M1170 538v54h-432v36" class="line"/>
+  <rect x="595" y="641" width="286" height="122" rx="17" class="box"/>
+  <circle cx="634" cy="683" r="21" class="accent"/><path d="M625 678h18v12h-18zM628 674h12m-12 21h12" fill="none" stroke="#4b82a2" stroke-width="1.8"/>
+  <text x="666" y="680" class="label">5. LLM answers from evidence</text><text x="619" y="716" class="body">Untrusted report text is treated</text><text x="619" y="736" class="body">as data; no tools are available.</text>
+
+  <path d="M887 702h64" class="line"/>
+  <rect x="961" y="641" width="220" height="122" rx="17" class="box"/>
+  <circle cx="1000" cy="683" r="21" class="icon"/><path d="M991 675h18v17h-18zM995 680h10m-10 4h10m-10 4h7" fill="none" stroke="#087565" stroke-width="1.7"/>
+  <text x="1032" y="680" class="label">6. Return sources</text><text x="985" y="716" class="body">Answer + document name</text><text x="985" y="736" class="body">ID + page + evidence</text>
+  <path d="M1187 702h46" class="line"/>
+  <rect x="1243" y="641" width="137" height="122" rx="17" class="box"/>
+  <circle cx="1280" cy="683" r="21" class="warn"/><path d="M1271 676h18v14h-18zm4 18h10" fill="none" stroke="#ad843d" stroke-width="1.8"/>
+  <text x="1310" y="680" class="label" style="font-size:15px">History</text><text x="1264" y="716" class="body">Same owner</text><text x="1264" y="736" class="body">only</text>
+
+  <rect x="72" y="815" width="1296" height="88" rx="17" fill="#103c4c"/>
+  <circle cx="111" cy="859" r="20" fill="#1b675b"/><path d="M111 846l10 4v7c0 8-10 13-10 13s-10-5-10-13v-7z" fill="none" stroke="#d8f4eb" stroke-width="1.8"/><path d="m106 857 4 4 7-8" fill="none" stroke="#d8f4eb" stroke-width="1.8"/>
+  <text x="146" y="854" style="font:700 16px system-ui;fill:#fff">The safety rule</text>
+  <text x="146" y="879" style="font:400 13px system-ui;fill:#c4ddd9">Vector search can suggest chunk IDs. PostgreSQL verifies every ID belongs to the signed-in user before any medical text is sent to the LLM.</text>
+</svg>

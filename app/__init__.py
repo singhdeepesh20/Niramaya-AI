@@ -1,1 +1,1 @@
-"""Niramaya-AI backend application package."""
+"""Niramaya-AI backend application."""

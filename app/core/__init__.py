@@ -1,1 +1,1 @@
-"""Application configuration and shared core concerns."""
+"""Shared application configuration and security primitives."""

@@ -15,6 +15,7 @@ from app.core.config import settings
 from app.core.errors import APIError
 from app.core.rate_limit import LoginRateLimiter
 from app.database import engine, get_db
+from app.documents.router import router as documents_router
 from app.health.router import router as health_router
 from app.user.router import router as user_router
 
@@ -44,7 +45,7 @@ def create_app() -> FastAPI:
             CORSMiddleware,
             allow_origins=settings.FRONTEND_ORIGINS,
             allow_credentials=False,
-            allow_methods=["GET", "POST"],
+            allow_methods=["GET", "POST", "DELETE"],
             allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
             expose_headers=["X-Request-ID"],
         )
@@ -135,6 +136,7 @@ def create_app() -> FastAPI:
 
     app.include_router(user_router)
     app.include_router(health_router)
+    app.include_router(documents_router)
 
     @app.get("/health", tags=["health"])
     async def health(db=Depends(get_db)) -> dict[str, str]:

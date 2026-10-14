@@ -20,6 +20,7 @@ from app.database import Base, get_db  # noqa: E402
 from app.main import create_app  # noqa: E402
 from app.user import models  # noqa: E402,F401
 from app.health import models as health_models  # noqa: E402,F401
+from app.documents import models as document_models  # noqa: E402,F401
 
 
 @pytest.fixture

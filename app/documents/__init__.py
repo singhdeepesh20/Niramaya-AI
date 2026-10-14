@@ -1,0 +1,1 @@
+"""Authenticated medical document API."""

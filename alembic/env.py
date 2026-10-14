@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.database import Base
 from app.user import models  # noqa: F401 - registers User on Base.metadata.
 from app.health import models as health_models  # noqa: F401 - registers health tables.
+from app.documents import models as document_models  # noqa: F401 - registers processing tables.
 
 config = context.config
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))

@@ -28,8 +28,8 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const result = await authApi.login({ username: username.trim(), password });
-      // The current API returns a bearer token, not an HttpOnly cookie. Keep it
-      // for this browser tab only; a backend cookie flow would be preferable.
+      // Current backend contract is a bearer token; retain it in tab-scoped memory storage only.
+      sessionStorage.removeItem("niramaya_user_cache");
       sessionStorage.setItem("niramaya_access_token", result.access_token);
       window.location.assign("/dashboard");
     } catch (cause) {

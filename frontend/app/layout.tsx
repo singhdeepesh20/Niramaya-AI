@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "./styles.css";
+import "./reports.css";
+import "./workspace.css";
+import "./document-overrides.css";
 
 export const metadata: Metadata = {
   title: "Niramaya-AI | Your Health Records. Smarter.",

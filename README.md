@@ -1,6 +1,6 @@
 # Niramaya-AI Health Records API
 
-This repository contains a modular FastAPI service for Niramaya-AI. It provides account authentication, user-scoped medical-record retrieval, citations, and a protected LLM question-answer endpoint.
+This repository contains a FastAPI backend and Next.js frontend for Niramaya-AI. It provides account authentication, private medical-report storage, a deterministic document-processing worker, owner-scoped extracted results, and a separate protected health question-answer feature. Uploaded documents are processed without an LLM; the optional health Q&A feature may use its configured LLM provider.
 
 > This is a software foundation, not a clinical product or healthcare compliance certification. Review data handling and clinical safety before using real patient information.
 
@@ -20,6 +20,14 @@ flowchart LR
     Settings[Validated environment settings<br/>app/core/config.py] --> API
     Settings --> Session
     Migrations[Alembic migrations] --> Postgres
+    API -->|verified owner + report| StorageAPI[Document API<br/>private upload and result routes]
+    StorageAPI -->|original PDF or image| S3[(Private S3)]
+    StorageAPI -->|document + outbox job| Postgres
+    Postgres --> Worker[Database-backed worker]
+    Worker -->|download original| S3
+    Worker --> Parser[PyMuPDF + local Tesseract<br/>deterministic rules]
+    Parser -->|pages, tables, findings, provenance| Postgres
+    Browser[Next.js workspace] -->|Bearer JWT| StorageAPI
     Health[Protected health Q&A] --> Retrieval[Owner-filtered retrieval]
     Retrieval --> Postgres
     Retrieval --> Qdrant[(Qdrant<br/>required user_id filter)]
@@ -42,23 +50,31 @@ app/
 │   ├── rate_limit.py        # Login rate-limiter integration
 │   └── security.py          # Argon2 and JWT helpers
 ├── user/
-    ├── controller.py        # Registration, login, current-user resolution
-    ├── dtos.py              # Validated request and safe response schemas
-    ├── models.py            # SQLAlchemy User model
-    └── router.py            # Versioned HTTP endpoints
-└── health/
-    ├── assistant.py         # OpenAI-compatible LLM and filtered Qdrant client
-    ├── dtos.py              # Question, citation, evidence, history contracts
-    ├── models.py            # Documents, chunks, entities, scoped chat history
-    ├── repository.py        # PostgreSQL owner filters, RLS identity, hybrid search
-    └── router.py            # Protected ask/history/document routes
+│   ├── controller.py        # Registration, login, current-user resolution
+│   ├── dtos.py              # Validated request and safe response schemas
+│   ├── models.py            # SQLAlchemy User model
+│   └── router.py            # Versioned HTTP endpoints
+├── health/
+│   ├── assistant.py         # Optional LLM and filtered Qdrant client
+│   ├── dtos.py              # Question, citation, evidence, history contracts
+│   ├── models.py            # Documents, chunks, entities, scoped chat history
+│   ├── repository.py        # PostgreSQL owner filters, RLS identity, hybrid search
+│   └── router.py            # Protected ask/history/document routes
+├── documents/
+│   ├── extraction.py        # PDF/OCR parsing, classification, entities, normalization
+│   ├── processing.py        # Persistent state machine and job lifecycle
+│   ├── pipeline.py          # Private object download and pipeline orchestration
+│   ├── router.py            # Authenticated document and result APIs
+│   └── worker.py            # Database-backed processing worker
+└── storage/
+    └── s3.py                # Private S3 upload, download, and short-lived URLs
 alembic/                     # Versioned database schema changes
-tests/                       # Isolated API tests using temporary SQLite databases
+tests/                       # Synthetic PDF/image fixtures and isolated API tests
 frontend/                    # Next.js App Router authentication UI
+├── app/documents/            # Document list, upload, result detail, review screens
 ├── app/login/page.tsx        # Login route
 ├── app/register/page.tsx     # Registration route
-├── components/               # Shared auth layout and controls
-└── lib/api.ts                # Typed FastAPI client
+└── lib/api.ts                # Typed authenticated FastAPI client
 ```
 
 The database module is at `app/database.py` as requested. The app factory does not create or alter tables at startup; use Alembic for schema changes.
@@ -68,6 +84,7 @@ The database module is at `app/database.py` as requested. The app factory does n
 - Python 3.12 or newer.
 - PostgreSQL for development/deployment.
 - A PostgreSQL database and a role allowed to create and update the schema.
+- Tesseract is optional for scanned-page and image OCR. Embedded-text PDFs work without it.
 
 ## Install and configure
 
@@ -120,13 +137,26 @@ Qdrant is optional; PostgreSQL full-text search remains available if it is not c
 
 ## Database migration and run
 
-Create the local database if needed, then apply the schema:
+Create the local database if needed, then apply all schema migrations:
 
 ```bash
 createdb -h localhost -p 5432 -U postgres niramayaai
 alembic upgrade head
+```
+
+Run these in separate terminals from the repository root. Start the API:
+
+```bash
 uvicorn app.main:app --reload
 ```
+
+Start the document worker:
+
+```bash
+python -m app.documents.worker
+```
+
+The API accepts uploads and writes a durable processing job. The worker independently claims jobs, extracts results, and persists its actual stage outcomes. Keep the worker running to process new reports. The current migration head is `0005_deterministic_results`.
 
 Migrations create the account and user-scoped medical record tables. The application never runs `create_all()` or migration DDL on startup. Migration `0002_user_scoped_health` enables and forces PostgreSQL Row-Level Security on health documents, entities, chunks, and chat history. Each query also includes an explicit owner filter and sets transaction-local `app.current_user_id` from the verified JWT. Use a dedicated runtime database role with `NOSUPERUSER NOBYPASSRLS`; do not run the API as PostgreSQL's `postgres` superuser. Apply migrations with a separate schema-owner role, then grant the runtime role only the required table permissions. PostgreSQL superusers can bypass RLS.
 
@@ -165,8 +195,22 @@ All authentication routes are under `/api/v1/users`.
 | `GET` | `/api/v1/documents/{document_id}` | Bearer JWT | Read the user's report metadata |
 | `GET` | `/api/v1/documents/{document_id}/view-url` | Bearer JWT | Create a short-lived authorized preview URL |
 | `GET` | `/api/v1/documents/{document_id}/download-url` | Bearer JWT | Create a short-lived authorized download URL |
+| `GET` | `/api/v1/documents/{document_id}/status` | Bearer JWT | Read actual state and processing metadata |
+| `GET` | `/api/v1/documents/{document_id}/extractions` | Bearer JWT | Read owner-scoped extracted results and provenance |
+| `GET` | `/api/v1/documents/{document_id}/tables` | Bearer JWT | Read extracted tables |
+| `GET` | `/api/v1/documents/{document_id}/pages` | Bearer JWT | Read page text and OCR status |
+| `GET` | `/api/v1/documents/{document_id}/history` | Bearer JWT | Read safe processing events and stage history |
+| `POST` | `/api/v1/documents/{document_id}/reprocess` | Bearer JWT | Queue a new owner-authorized extraction generation |
 | `DELETE` | `/api/v1/documents/{document_id}` | Bearer JWT | Delete the user's report from S3 and PostgreSQL |
 | `GET` | `/api/v1/documents/storage/check` | Bearer JWT | Check configured S3 access and read-only privacy settings |
+
+## Deterministic document processing
+
+The database-backed worker downloads each owner's private source file and processes it locally. PDFs use PyMuPDF for page text and table detection. PNG and JPEG uploads are wrapped as a one-page PDF and sent through the same local OCR fallback. When OCR is needed, the worker uses Tesseract via `pytesseract`; it does not send reports to an external OCR service or an LLM. The separate health Q&A endpoint may use an LLM after the backend has authorized retrieved evidence.
+
+Rule-based classification recognizes common CBC, lipid, liver, kidney, thyroid, glucose, urinalysis, MRI, CT, X-ray, ultrasound, ECG, prescription, and discharge-summary signals. Explicit test aliases extract selected CBC, lipid, liver, kidney, glucose, thyroid, and urinalysis values. Imaging headings and explicit report metadata are preserved where recognized. Original values, units, page number, source excerpt, parsing warnings, and rule version are stored; only explicitly supported unit conversions produce a separate normalized value. The parser does not infer a diagnosis or assign clinical meaning.
+
+The worker records page text, detected tables, entities, stage outcomes, and processing history in PostgreSQL. Processing states are `queued`, `processing`, `completed`, `review_required`, `failed`, and `deletion_pending`. Unsupported or ambiguous content, unreadable files, and missing OCR for scan-only pages are surfaced as review or failure states rather than simulated progress. Parsing quality scores are deterministic heuristics, not probabilities. See [document processing](docs/medical-data/document-processing.md), [data provenance](docs/medical-data/data-provenance.md), and the [worker runbook](docs/operations/document-processing-runbook.md) for the implementation scope and limitations.
 
 ### Private medical document storage
 
@@ -186,14 +230,22 @@ S3_MAX_UPLOAD_BYTES=15000000
 
 For local development, use a short-lived AWS profile or credentials with only the required access to this bucket. In deployed environments, prefer an IAM role. The service uses boto3's default credential chain if the two static key values are blank. Never paste keys into source files, frontend settings, logs, or commits. Confirm the bucket's Block Public Access, bucket policy, and ACL configuration in AWS before uploading sensitive data. The authenticated storage check reads these settings but never changes them. An unverified check is reported as unverified when the IAM principal cannot read the configuration.
 
-The runtime principal needs `s3:ListBucket` on the named bucket for `HeadBucket`, `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` on `arn:aws:s3:::nirmayaai01-514917275055-eu-north-1-an/users/*`. The read-only verification endpoint also needs `s3:GetBucketPublicAccessBlock`, `s3:GetBucketPolicyStatus`, and `s3:GetBucketAcl` on the bucket ARN. Restrict the principal and bucket policy to the intended environment; do not grant public access. For SSE-KMS buckets, add only the necessary KMS key permissions. These permissions are a starting point; validate them against your account's bucket policy and encryption setup.
+The runtime principal needs `s3:ListBucket` on the named bucket for `HeadBucket`, `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` on `arn:aws:s3:::nirmayaai01-514917275055-eu-north-1-an/users/*`. The worker also needs `s3:GetObject` to retrieve private source files for processing. The read-only verification endpoint also needs `s3:GetBucketPublicAccessBlock`, `s3:GetBucketPolicyStatus`, and `s3:GetBucketAcl` on the bucket ARN. Restrict the principal and bucket policy to the intended environment; do not grant public access. For SSE-KMS buckets, add only the necessary KMS key permissions. These permissions are a starting point; validate them against your account's bucket policy and encryption setup.
 
-Apply the schema and install dependencies:
+Install dependencies and apply the schema:
 
 ```bash
 python -m pip install -r requirements.txt
 alembic upgrade head
 ```
+
+For local scanned-page OCR on macOS, install the separate Tesseract executable:
+
+```bash
+brew install tesseract
+```
+
+The default configuration uses English (`OCR_LANGUAGE=eng`). OCR runs locally and does not call a hosted OCR or generative AI service. Without Tesseract, pages that need OCR are retained with warnings and the report requires review.
 
 After configuring credentials, verify S3 connectivity without printing credentials:
 
@@ -202,19 +254,37 @@ curl -sS http://127.0.0.1:8000/api/v1/documents/storage/check \
   -H "Authorization: Bearer ACCESS_TOKEN"
 ```
 
-The check reports safe categories such as `credentials_missing`, `invalid_credentials`, `missing_permissions`, `bucket_not_found`, or `region_mismatch`. `private_configuration_verified` is true only when each privacy setting was successfully read and verifies private access. The endpoint is authenticated. For a sample upload, create a local non-sensitive PDF and submit it as multipart data:
+The check reports safe categories such as `credentials_missing`, `invalid_credentials`, `missing_permissions`, `bucket_not_found`, or `region_mismatch`. `private_configuration_verified` is true only when each privacy setting was successfully read and verifies private access. The endpoint is authenticated. Automated tests use mocked S3; use this endpoint to check the current local credentials and bucket permissions before an upload. For a valid synthetic PDF, generate and submit a non-sensitive sample:
 
 ```bash
-printf '%%PDF-1.4\n%% local test file\n' > /tmp/niramaya-sample.pdf
+.venv/bin/python - <<'PY'
+import pymupdf
+pdf = pymupdf.open()
+page = pdf.new_page()
+page.insert_text((72, 72), "Synthetic CBC\nHemoglobin 13.5 g/dL\nWBC 7,200 cells/cumm")
+pdf.save("/tmp/niramaya-sample.pdf")
+pdf.close()
+PY
 curl -i http://127.0.0.1:8000/api/v1/documents/upload \
   -H "Authorization: Bearer ACCESS_TOKEN" \
   -F 'document_type=other' \
   -F 'file=@/tmp/niramaya-sample.pdf;type=application/pdf'
 ```
 
+After upload, use the returned document ID to check status and read the persisted extraction results as the same authenticated user. Available routes include `/status`, `/extractions`, `/tables`, `/pages`, and `/history` under `/api/v1/documents/{document_id}`. The document page in the frontend shows those results and actual worker status. Reprocess is owner-only and creates a new extraction generation.
+
 The reports screen is available at `http://localhost:3000/reports`. It displays metadata returned by the authenticated API and fetches a fresh presigned URL only when a user opens or downloads an owned report. The browser does not store AWS credentials or presigned URLs in local storage. Avoid using real patient reports until your AWS, database, deployment, and organizational safeguards are reviewed; these controls alone do not establish regulatory compliance.
 
-The current local environment has no AWS credentials configured. Code and tests use a mocked S3 client; the live bucket and its private configuration have not been verified. Configure a profile/role and run the storage check before treating AWS connectivity as established.
+The test suite uses synthetic reports and a mocked storage adapter. A successful test run does not verify an AWS account; the authenticated storage check validates the live bucket using the credentials available to the running API.
+
+Run backend checks from the repository root and frontend checks from `frontend/`:
+
+```bash
+.venv/bin/python -m pytest -q
+cd frontend
+npm run lint
+npm run build
+```
 
 ![Niramaya-AI secure health question workflow](docs/health-qa-workflow.svg)
 
@@ -229,7 +299,7 @@ curl -i http://127.0.0.1:8000/api/v1/health/ask \
 
 The request accepts `question` and optional `document_types`, `date_from`, `date_to`, and `document_ids`. Extra fields such as `user_id` are rejected. The user identity comes only from the verified JWT. PostgreSQL performs lexical full-text ranking (tests on SQLite use token matching). Semantic retrieval uses Qdrant with a server-generated mandatory `user_id` filter. Qdrant results are untrusted chunk IDs: PostgreSQL re-fetches each chunk joined to its document under explicit owner and metadata filters before any text reaches the LLM. Reciprocal rank fusion combines semantic and lexical results.
 
-Qdrant points should use the medical chunk UUID as point ID (or include it as payload `chunk_id`) and carry `user_id`, `document_id`, `document_type`, and `document_date_epoch` (UTC Unix seconds). The implementation sends a filtered Qdrant query using its [query-points API](https://api.qdrant.tech/api-reference/search/query-points/). Original files are represented by `object_key`; an upload/object-storage ingestion pipeline is outside this feature.
+Qdrant points should use the medical chunk UUID as point ID (or include it as payload `chunk_id`) and carry `user_id`, `document_id`, `document_type`, and `document_date_epoch` (UTC Unix seconds). The implementation sends a filtered Qdrant query using its [query-points API](https://api.qdrant.tech/api-reference/search/query-points/). Document upload and deterministic extraction are separate from Q&A retrieval; the current document worker does not generate embeddings or insert chunks into Qdrant.
 
 Responses include the answer, server-built citations (document ID, name, and page), and relevant evidence excerpts. Empty retrieval returns a clear no-record answer without calling the LLM. Report text is treated as untrusted data; the prompt tells the model to ignore embedded instructions, no tools are exposed, and it is told not to invent facts or values. Q&A history is stored under the owning user and the history route filters on that verified user.
 

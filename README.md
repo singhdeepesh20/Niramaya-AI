@@ -160,6 +160,61 @@ All authentication routes are under `/api/v1/users`.
 | `POST` | `/api/v1/health/ask` | Bearer JWT | Retrieve authorized records and answer a question |
 | `GET` | `/api/v1/health/history` | Bearer JWT | List the signed-in user's Q&A history |
 | `GET` | `/api/v1/health/documents/{document_id}` | Bearer JWT | Read authorized document metadata |
+| `GET` | `/api/v1/documents` | Bearer JWT | List the signed-in user's uploaded reports with filters and pagination |
+| `POST` | `/api/v1/documents/upload` | Bearer JWT | Upload a private PDF, JPEG, or PNG report |
+| `GET` | `/api/v1/documents/{document_id}` | Bearer JWT | Read the user's report metadata |
+| `GET` | `/api/v1/documents/{document_id}/view-url` | Bearer JWT | Create a short-lived authorized preview URL |
+| `GET` | `/api/v1/documents/{document_id}/download-url` | Bearer JWT | Create a short-lived authorized download URL |
+| `DELETE` | `/api/v1/documents/{document_id}` | Bearer JWT | Delete the user's report from S3 and PostgreSQL |
+| `GET` | `/api/v1/documents/storage/check` | Bearer JWT | Check configured S3 access and read-only privacy settings |
+
+### Private medical document storage
+
+The document feature stores originals in the private S3 bucket `nirmayaai01-514917275055-eu-north-1-an` in `eu-north-1`. The application creates opaque object keys under `users/{verified-user-id}/documents/{uuid}` and stores only those keys and metadata in PostgreSQL. It derives ownership from the verified bearer token on every operation. Uploads accept PDF, JPEG, or PNG only, verify the file signature, and default to a 15 MB maximum. Preview and download URLs expire after five minutes by default. The application does not set public ACLs or change bucket policy/security configuration.
+
+Set the following in your ignored local `.env` file (the checked-in `.env.example` has blank credential values):
+
+```env
+AWS_REGION=eu-north-1
+S3_BUCKET_NAME=nirmayaai01-514917275055-eu-north-1-an
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_SESSION_TOKEN=
+S3_PRESIGNED_URL_EXPIRES_SECONDS=300
+S3_MAX_UPLOAD_BYTES=15000000
+```
+
+For local development, use a short-lived AWS profile or credentials with only the required access to this bucket. In deployed environments, prefer an IAM role. The service uses boto3's default credential chain if the two static key values are blank. Never paste keys into source files, frontend settings, logs, or commits. Confirm the bucket's Block Public Access, bucket policy, and ACL configuration in AWS before uploading sensitive data. The authenticated storage check reads these settings but never changes them. An unverified check is reported as unverified when the IAM principal cannot read the configuration.
+
+The runtime principal needs `s3:ListBucket` on the named bucket for `HeadBucket`, `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` on `arn:aws:s3:::nirmayaai01-514917275055-eu-north-1-an/users/*`. The read-only verification endpoint also needs `s3:GetBucketPublicAccessBlock`, `s3:GetBucketPolicyStatus`, and `s3:GetBucketAcl` on the bucket ARN. Restrict the principal and bucket policy to the intended environment; do not grant public access. For SSE-KMS buckets, add only the necessary KMS key permissions. These permissions are a starting point; validate them against your account's bucket policy and encryption setup.
+
+Apply the schema and install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+alembic upgrade head
+```
+
+After configuring credentials, verify S3 connectivity without printing credentials:
+
+```bash
+curl -sS http://127.0.0.1:8000/api/v1/documents/storage/check \
+  -H "Authorization: Bearer ACCESS_TOKEN"
+```
+
+The check reports safe categories such as `credentials_missing`, `invalid_credentials`, `missing_permissions`, `bucket_not_found`, or `region_mismatch`. `private_configuration_verified` is true only when each privacy setting was successfully read and verifies private access. The endpoint is authenticated. For a sample upload, create a local non-sensitive PDF and submit it as multipart data:
+
+```bash
+printf '%%PDF-1.4\n%% local test file\n' > /tmp/niramaya-sample.pdf
+curl -i http://127.0.0.1:8000/api/v1/documents/upload \
+  -H "Authorization: Bearer ACCESS_TOKEN" \
+  -F 'document_type=other' \
+  -F 'file=@/tmp/niramaya-sample.pdf;type=application/pdf'
+```
+
+The reports screen is available at `http://localhost:3000/reports`. It displays metadata returned by the authenticated API and fetches a fresh presigned URL only when a user opens or downloads an owned report. The browser does not store AWS credentials or presigned URLs in local storage. Avoid using real patient reports until your AWS, database, deployment, and organizational safeguards are reviewed; these controls alone do not establish regulatory compliance.
+
+The current local environment has no AWS credentials configured. Code and tests use a mocked S3 client; the live bucket and its private configuration have not been verified. Configure a profile/role and run the storage check before treating AWS connectivity as established.
 
 ![Niramaya-AI secure health question workflow](docs/health-qa-workflow.svg)
 

@@ -1,0 +1,5 @@
+# Embeddings
+
+Embedding generation is independent of LLM answer generation. The configured local model is `sentence-transformers/all-MiniLM-L6-v2` at `EMBEDDING_MODEL_REVISION` with 384 dimensions and cosine distance, CPU by default. The example revision is `main`; production deployments should pin a reviewed model commit. Model loading is lazy and local-only unless `EMBEDDING_ALLOW_DOWNLOAD=true`; the service does not download weights implicitly. Set `EMBEDDING_MODEL_PATH` to a previously installed model directory when deploying offline. Query and document vectors use the same model and normalization.
+
+Install dependencies with `python -m pip install -r requirements.txt`. To fetch weights intentionally, use a trusted model source and cache them before startup, then set `EMBEDDING_ALLOW_DOWNLOAD=false` and point `EMBEDDING_MODEL_PATH` to that cache. Model initialization and dimension errors are saved as safe indexing error codes. Changing model or dimension requires a separately named Qdrant collection and reindexing; existing collections are checked and never dropped or recreated automatically.

@@ -100,6 +100,10 @@ async function authenticatedRequest<T>(path: string, token: string, init: Reques
       ? "Your session has expired. Please sign in again."
       : response.status === 403
         ? "You don’t have permission to complete this action."
+        : response.status === 422
+          ? body.error?.message || body.detail || "Check the question and selected documents, then try again."
+          : response.status === 429
+            ? "You’ve sent questions too quickly. Wait a moment, then retry."
         : body.error?.message || body.detail || "The request could not be completed. Please try again.";
     throw new ApiError(message, response.status);
   }
@@ -203,8 +207,8 @@ export const documentsApi = {
 };
 
 export const healthApi = {
-  ask: (token: string, question: string) => authenticatedRequest<HealthAnswer>("/api/v1/health/ask", token, {
-    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }),
+  ask: (token: string, question: string, documentIds?: string[]) => authenticatedRequest<HealthAnswer>("/api/v1/health/ask", token, {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question, ...(documentIds ? { document_ids: documentIds } : {}) }),
   }, 110_000),
   history: (token: string) => authenticatedGet<ChatHistoryItem[]>("/api/v1/health/history", token),
 };

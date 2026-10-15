@@ -3,6 +3,7 @@ import "./styles.css";
 import "./reports.css";
 import "./workspace.css";
 import "./document-overrides.css";
+import "./assistant-rag.css";
 
 export const metadata: Metadata = {
   title: "Niramaya-AI | Your Health Records. Smarter.",

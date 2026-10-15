@@ -9,10 +9,30 @@ out/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.hypothesis/
 .coverage
+coverage.xml
+*.cover
 htmlcov/
 .mypy_cache/
 .ruff_cache/
 dist/
 build/
 *.egg-info/
+
+# Local databases, uploads, extracted medical data, and processing artifacts.
+*.db
+*.sqlite
+*.sqlite3
+/uploads/
+/local-data/
+/extracted-data/
+/model-cache/
+.cache/
+logs/
+*.log
+
+# Local editor and operating-system files.
+.DS_Store
+Thumbs.db
+.idea/

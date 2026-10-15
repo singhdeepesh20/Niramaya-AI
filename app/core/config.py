@@ -16,11 +16,23 @@ class Settings(BaseSettings):
     JWT_ISSUER: str | None = None
     JWT_AUDIENCE: str | None = None
     FRONTEND_ORIGINS: list[str] = Field(default_factory=list)
-    LLM_API_BASE_URL: str = "https://api.openai.com/v1"
+    LLM_API_BASE_URL: str = "https://api.groq.com/openai/v1"
     LLM_API_KEY: SecretStr | None = None
-    LLM_MODEL: str = "gpt-4o-mini"
-    EMBEDDING_MODEL: str = "text-embedding-3-small"
-    LLM_TIMEOUT_SECONDS: float = Field(default=20, gt=0, le=120)
+    LLM_MODEL: str = "openai/gpt-oss-120b"
+    EMBEDDING_PROVIDER: Literal["local"] = "local"
+    EMBEDDING_MODEL_NAME: str = "sentence-transformers/all-MiniLM-L6-v2"
+    EMBEDDING_MODEL_REVISION: str = "main"
+    EMBEDDING_MODEL_PATH: str | None = None
+    EMBEDDING_DEVICE: str = "cpu"
+    EMBEDDING_BATCH_SIZE: int = Field(default=32, ge=1, le=128)
+    EMBEDDING_DIMENSION: int = Field(default=384, ge=1, le=4096)
+    EMBEDDING_ALLOW_DOWNLOAD: bool = False
+    RAG_GENERATION_ENABLED: bool = True
+    RAG_TOP_K: int = Field(default=5, ge=1, le=20)
+    RAG_MAX_CONTEXT_CHARS: int = Field(default=12000, ge=1000, le=50000)
+    CHUNK_SIZE_CHARS: int = Field(default=1200, ge=300, le=5000)
+    CHUNK_OVERLAP_CHARS: int = Field(default=160, ge=0, le=1000)
+    LLM_TIMEOUT_SECONDS: float = Field(default=90, gt=0, le=120)
     QDRANT_URL: str | None = None
     QDRANT_API_KEY: SecretStr | None = None
     QDRANT_COLLECTION: str = "niramaya_medical_chunks"

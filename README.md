@@ -121,19 +121,24 @@ Issuer and audience may be left blank for local development. When configured, th
 Configure the following optional settings to enable semantic retrieval and answer generation:
 
 ```env
-LLM_API_BASE_URL=https://api.openai.com/v1
-LLM_API_KEY=YOUR_PROVIDER_SECRET
-LLM_MODEL=gpt-4o-mini
-EMBEDDING_MODEL=text-embedding-3-small
-LLM_TIMEOUT_SECONDS=20
+LLM_API_BASE_URL=https://api.groq.com/openai/v1
+LLM_API_KEY=YOUR_GROQ_API_KEY
+LLM_MODEL=openai/gpt-oss-120b
+RAG_GENERATION_ENABLED=true
+EMBEDDING_PROVIDER=local
+EMBEDDING_MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2
+EMBEDDING_MODEL_REVISION=main
+EMBEDDING_DIMENSION=384
+EMBEDDING_ALLOW_DOWNLOAD=false
+LLM_TIMEOUT_SECONDS=90
 QDRANT_URL=https://your-qdrant-host
 QDRANT_API_KEY=YOUR_QDRANT_SECRET
 QDRANT_COLLECTION=niramaya_medical_chunks
-HEALTH_RETRIEVAL_LIMIT=8
+RAG_TOP_K=5
 HEALTH_CANDIDATE_LIMIT=30
 ```
 
-Qdrant is optional; PostgreSQL full-text search remains available if it is not configured or is temporarily unavailable. LLM generation requires `LLM_API_KEY`. The configured provider receives the question and only authorized excerpts selected by the backend. Review the provider's data-handling terms and deployment before sending sensitive records.
+Qdrant is optional; PostgreSQL full-text search remains available if it is not configured or is temporarily unavailable. RAG answer generation uses Groq's OpenAI-compatible endpoint with `openai/gpt-oss-120b` and requires a Groq API key in `LLM_API_KEY`. Local embeddings do not use that key. When generation is enabled, the question and only backend-authorized excerpts are sent to Groq. Review the provider's data-handling terms before using real medical records.
 
 ## Database migration and run
 

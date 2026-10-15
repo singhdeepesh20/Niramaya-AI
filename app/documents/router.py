@@ -14,7 +14,7 @@ from app.core.config import settings
 from app.core.errors import APIError
 from app.database import get_db
 from app.documents.dtos import (
-    DocumentPagePublic, DocumentPagesResponse, DocumentSummary, DocumentTablePublic,
+    DocumentPagePublic, DocumentPagesResponse, DocumentSummary, DocumentTablePublic, IndexingStatusResponse,
     DocumentTablesResponse, DocumentType, ExtractedEntitiesResponse, ExtractedEntityPublic,
     MedicalDocumentPage, MedicalDocumentPublic, PresignedDocumentUrl, ProcessingEventPublic,
     ProcessingHistoryResponse, ProcessingStagePublic, ProcessingStatusResponse, StorageCheck,
@@ -243,6 +243,54 @@ async def read_document(
     if document.upload_status != "ready":
         raise APIError(404, "document_not_found", "Report not found.")
     return document
+
+
+@router.get("/{document_id}/indexing-status", response_model=IndexingStatusResponse)
+async def get_document_indexing_status(
+    document_id: UUID,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> IndexingStatusResponse:
+    document = await _owned_document(db, user, document_id)
+    return IndexingStatusResponse(
+        document_id=document.id, extraction_generation=document.processing_generation,
+        status=document.indexing_status, chunk_count=document.indexed_chunk_count,
+        model=document.indexing_model, dimension=document.indexing_dimension,
+        attempts=document.indexing_attempts, updated_at=document.indexing_updated_at,
+        error_code=document.indexing_error_code,
+    )
+
+
+@router.post("/{document_id}/reindex", response_model=IndexingStatusResponse, status_code=status.HTTP_202_ACCEPTED)
+async def request_document_reindex(
+    document_id: UUID,
+    user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> IndexingStatusResponse:
+    document = await _owned_document(db, user, document_id)
+    if document.processing_state not in {ProcessingState.COMPLETED.value, ProcessingState.REVIEW_REQUIRED.value}:
+        raise APIError(409, "extraction_not_ready", "Wait for document extraction to finish before indexing.")
+    await set_tenant_context(db, user.id)
+    pending = await db.scalar(select(DocumentProcessingJob.id).where(
+        DocumentProcessingJob.document_id == document_id,
+        DocumentProcessingJob.user_id == user.id,
+        DocumentProcessingJob.job_type == "index",
+        DocumentProcessingJob.status.in_(("pending", "running")),
+    ).limit(1))
+    if pending is None:
+        request_id = uuid4()
+        db.add(DocumentProcessingJob(
+            user_id=user.id, document_id=document.id, job_type="index", status="pending",
+            idempotency_key=f"index:{document.id}:{request_id}",
+        ))
+        document.indexing_status = "queued"
+        document.indexing_error_code = None
+        await db.commit()
+        await set_tenant_context(db, user.id)
+        await db.refresh(document)
+    else:
+        await db.rollback()
+    return await get_document_indexing_status(document_id, user, db)
 
 
 @router.get("/{document_id}/status", response_model=ProcessingStatusResponse)

@@ -1,6 +1,6 @@
 import asyncio
 from datetime import date
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import select
 from pydantic import SecretStr
@@ -183,6 +183,22 @@ def test_authorized_context_citations_and_injection_are_data_not_instructions(cl
     assert "You have no tools" in SYSTEM_PROMPT
 
 
+def test_real_assistant_returns_evidence_without_llm_provider(client, monkeypatch):
+    monkeypatch.setattr(settings, "QDRANT_URL", None)
+    monkeypatch.setattr(settings, "LLM_API_KEY", None)
+    monkeypatch.setattr(settings, "RAG_GENERATION_ENABLED", False)
+    token_a, user_a = _register_and_login(client, "evidenceonly", "evidenceonly@example.com")
+    _token_b, user_b = _register_and_login(client, "evidenceother", "evidenceother@example.com")
+    _seed_records(client, user_a, user_b)
+    response = client.post("/api/v1/health/ask", headers={"Authorization": f"Bearer {token_a}"},
+                           json={"question": "What was my latest hemoglobin result?"})
+    assert response.status_code == 200
+    body = response.json()
+    assert body["generation_status"] == "evidence_only"
+    assert body["citations"] and body["evidence"]
+    assert "13.4 g/dL" in body["evidence"][0]["excerpt"]
+
+
 def test_request_cannot_override_authenticated_user_or_filters(client):
     token_a, user_a = _register_and_login(client, "erin", "erin@example.com")
     _token_b, user_b = _register_and_login(client, "frank", "frank@example.com")
@@ -238,7 +254,8 @@ def test_qdrant_request_always_sends_server_owned_tenant_filter(monkeypatch):
     doc = UUID("153ff85a-f57f-4757-8a18-3017bd9bc272")
     monkeypatch.setattr(settings, "QDRANT_URL", "https://qdrant.example.test")
     monkeypatch.setattr(settings, "QDRANT_API_KEY", SecretStr("test-only-key"))
-    monkeypatch.setattr(settings, "LLM_API_KEY", SecretStr("test-only-key"))
+    # Embedding and vector retrieval do not depend on answer-generation credentials.
+    monkeypatch.setattr(settings, "LLM_API_KEY", None)
     monkeypatch.setattr("app.health.assistant.httpx.AsyncClient", Client)
     assistant = HealthAssistant()
     monkeypatch.setattr(assistant, "_embed", fake_embed)
@@ -274,8 +291,35 @@ def test_llm_timeout_returns_safe_gateway_timeout(monkeypatch):
             raise httpx.ReadTimeout("provider details must not reach the response")
 
     monkeypatch.setattr(settings, "LLM_API_KEY", SecretStr("test-provider-key"))
+    monkeypatch.setattr(settings, "RAG_GENERATION_ENABLED", True)
     monkeypatch.setattr("app.health.assistant.httpx.AsyncClient", TimeoutClient)
     with pytest.raises(APIError) as caught:
         asyncio.run(HealthAssistant().answer("hemoglobin", [{"text": "authorized snippet"}]))
     assert caught.value.status_code == 504
     assert "provider details" not in caught.value.message
+
+
+def test_rag_generation_uses_configured_groq_model(monkeypatch):
+    captured = {}
+
+    class Response:
+        def raise_for_status(self): return None
+        def json(self): return {"choices": [{"message": {"content": "Hemoglobin was 13.4 g/dL [E1]."}}]}
+
+    class Client:
+        def __init__(self, **_): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *_): return None
+        async def post(self, url, **kwargs):
+            captured.update({"url": url, **kwargs})
+            return Response()
+
+    monkeypatch.setattr(settings, "LLM_API_BASE_URL", "https://api.groq.com/openai/v1")
+    monkeypatch.setattr(settings, "LLM_MODEL", "openai/gpt-oss-120b")
+    monkeypatch.setattr(settings, "LLM_API_KEY", SecretStr("test-groq-key"))
+    monkeypatch.setattr(settings, "RAG_GENERATION_ENABLED", True)
+    monkeypatch.setattr("app.health.assistant.httpx.AsyncClient", Client)
+    answer = asyncio.run(HealthAssistant().answer("hemoglobin?", [{"evidence_id": "E1", "text": "13.4 g/dL"}]))
+    assert answer == "Hemoglobin was 13.4 g/dL [E1]."
+    assert captured["url"] == "https://api.groq.com/openai/v1/chat/completions"
+    assert captured["json"]["model"] == "openai/gpt-oss-120b"

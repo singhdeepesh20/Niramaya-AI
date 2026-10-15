@@ -35,7 +35,12 @@ def qdrant_filter(user_id: UUID, filters: HealthQuestion) -> dict:
 
 
 def _apply_document_filters(statement, user_id: UUID, filters: HealthQuestion):
-    statement = statement.where(MedicalChunk.user_id == user_id, MedicalDocument.user_id == user_id)
+    statement = statement.where(
+        MedicalChunk.user_id == user_id, MedicalDocument.user_id == user_id,
+        MedicalChunk.extraction_generation == MedicalDocument.processing_generation,
+        MedicalDocument.upload_status == "ready",
+        MedicalDocument.processing_state != "deletion_pending",
+    )
     if filters.document_types:
         statement = statement.where(func.lower(MedicalDocument.document_type).in_(filters.document_types))
     if filters.date_from:
@@ -115,10 +120,12 @@ async def get_authorized_document(db: AsyncSession, user_id: UUID, document_id: 
 
 
 async def save_chat_message(
-    db: AsyncSession, user_id: UUID, question: str, answer: str, citations: list[dict]
+    db: AsyncSession, user_id: UUID, question: str, answer: str, citations: list[dict],
+    generation_status: str = "generated",
 ) -> HealthChatMessage:
     await set_tenant_context(db, user_id)
-    message = HealthChatMessage(user_id=user_id, question=question, answer=answer, citations=citations)
+    message = HealthChatMessage(user_id=user_id, question=question, answer=answer,
+                                citations=citations, generation_status=generation_status)
     db.add(message)
     await db.commit()
     return message

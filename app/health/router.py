@@ -41,25 +41,31 @@ async def ask_health_question(
     authenticated_user_id = user.id
     if payload.document_ids == []:
         answer = "No authorized records matched the document filter."
-        await save_chat_message(db, authenticated_user_id, payload.question, answer, [])
-        return HealthAnswer(answer=answer, citations=[], evidence=[])
+        await save_chat_message(db, authenticated_user_id, payload.question, answer, [], "insufficient_evidence")
+        return HealthAnswer(answer=answer, citations=[], evidence=[], generation_status="insufficient_evidence")
 
     # Release the user lookup transaction before waiting on remote embedding/vector services.
     await db.rollback()
     vector_ids = await assistant.vector_chunk_ids(authenticated_user_id, payload)
     rows = await retrieve_authorized_chunks(
-        db, authenticated_user_id, payload, vector_ids, settings.HEALTH_RETRIEVAL_LIMIT
+        db, authenticated_user_id, payload, vector_ids, settings.RAG_TOP_K
     )
     if not rows:
         answer = "I couldn't find this information in the medical records available to your account."
-        await save_chat_message(db, authenticated_user_id, payload.question, answer, [])
-        return HealthAnswer(answer=answer, citations=[], evidence=[])
+        await save_chat_message(db, authenticated_user_id, payload.question, answer, [], "insufficient_evidence")
+        return HealthAnswer(answer=answer, citations=[], evidence=[], generation_status="insufficient_evidence")
 
     evidence_data: list[dict] = []
     citations: list[Citation] = []
     evidence: list[EvidenceItem] = []
     seen_citations: set[tuple[UUID, int | None]] = set()
+    context_chars = 0
     for index, (chunk, document) in enumerate(rows, start=1):
+        remaining = settings.RAG_MAX_CONTEXT_CHARS - context_chars
+        if remaining <= 0:
+            break
+        excerpt_text = chunk.content[:min(4000, remaining)]
+        context_chars += len(excerpt_text)
         citation = Citation(
             document_id=document.id,
             document_name=document.name,
@@ -71,24 +77,28 @@ async def ask_health_question(
                 "document_id": str(document.id),
                 "document_name": document.name,
                 "page_number": chunk.page_number,
-                "text": chunk.content[:4000],
+                "text": excerpt_text,
             }
         )
-        evidence.append(EvidenceItem(**citation.model_dump(), excerpt=chunk.content[:700]))
+        evidence.append(EvidenceItem(**citation.model_dump(), excerpt=excerpt_text[:700]))
         citation_key = (document.id, chunk.page_number)
         if citation_key not in seen_citations:
             citations.append(citation)
             seen_citations.add(citation_key)
 
+    generation_enabled = getattr(assistant, "generation_enabled", True)
     answer = await assistant.answer(payload.question, evidence_data)
+    generation_status = "generated" if generation_enabled else "evidence_only"
     await save_chat_message(
         db,
         authenticated_user_id,
         payload.question,
         answer,
         [citation.model_dump(mode="json") for citation in citations],
+        generation_status,
     )
-    return HealthAnswer(answer=answer, citations=citations, evidence=evidence)
+    return HealthAnswer(answer=answer, citations=citations, evidence=evidence,
+                        generation_status=generation_status)
 
 @router.get("/history", response_model=list[ChatHistoryItem])
 async def read_chat_history(

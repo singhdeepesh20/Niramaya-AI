@@ -55,6 +55,9 @@ async def process_one(
         if job_type == "delete":
             await db.commit()
             return await _process_delete_job(sessions, job_id, user_id, document_id, worker_id)
+        if job_type == "index":
+            await db.commit()
+            return await _process_index_job(sessions, job_id, user_id, document_id)
         try:
             await set_tenant_context(db, user_id)
             doc = (await db.scalars(select(MedicalDocument).where(
@@ -89,6 +92,10 @@ async def process_one(
             result = await asyncio.to_thread(processor.process_document, doc)
             await _persist_pipeline_result(sessions, job_id, user_id, document_id, worker_id, result,
                                            vector_index_required=vector_index_required)
+            from app.health.indexing import index_document
+            index_outcome = await index_document(sessions, user_id, document_id)
+            if index_outcome["status"] == "failed":
+                await _enqueue_index_retry(sessions, user_id, document_id)
         except PDFProcessingError as exc:
             await _record_pipeline_failure(sessions, job_id, user_id, document_id, worker_id, exc.reason_code)
         except Exception as exc:
@@ -254,11 +261,11 @@ async def _persist_pipeline_result(sessions, job_id, user_id, document_id, worke
         if vector_index_required:
             await record_stage(db, user_id=user_id, document_id=document_id, generation=generation,
                                stage=ProcessingStage.VECTOR_INDEX, status=StageStatus.SKIPPED,
-                               reason_code="no_local_embedding_provider_configured")
-        target = ProcessingState.REVIEW_REQUIRED if result.review_reasons or vector_index_required else ProcessingState.COMPLETED
-        reason = result.review_reasons[0] if result.review_reasons else (
-            "vector_index_not_configured" if vector_index_required else "deterministic_extraction_complete"
-        )
+                               reason_code="indexing_runs_as_an_independent_stage")
+        # Extraction truth is independent of vector service availability. The RAG
+        # index status is stored separately and is never used to falsify extraction.
+        target = ProcessingState.REVIEW_REQUIRED if result.review_reasons else ProcessingState.COMPLETED
+        reason = result.review_reasons[0] if result.review_reasons else "deterministic_extraction_complete"
         await transition_document(db, user_id=user_id, document_id=document_id, target=target,
                                   actor=worker_id, reason_code=reason)
         job.status, job.locked_until = "succeeded", None
@@ -336,6 +343,45 @@ async def _process_delete_job(sessions, job_id: UUID, user_id: UUID, document_id
         job.status, job.last_reason_code, job.locked_until = "succeeded", "external_cleanup_complete", None
         await db.commit()
     return True
+
+
+async def _process_index_job(sessions, job_id: UUID, user_id: UUID, document_id: UUID) -> bool:
+    """Retry only the index stage; extracted PostgreSQL content remains canonical."""
+    from app.health.indexing import index_document
+    outcome = await index_document(sessions, user_id, document_id)
+    async with sessions() as db:
+        await set_tenant_context(db, user_id)
+        job = await db.get(DocumentProcessingJob, job_id)
+        if job is None:
+            return True
+        if outcome["status"] == "failed" and job.attempts < job.max_attempts:
+            job.status = "pending"
+            job.available_at = retry_available_at(job.attempts)
+        else:
+            job.status = "succeeded" if outcome["status"] in {"completed", "not_configured"} else "failed"
+        job.last_reason_code = None if job.status == "succeeded" else outcome["status"]
+        job.locked_until = None
+        await db.commit()
+    return True
+
+
+async def _enqueue_index_retry(sessions, user_id: UUID, document_id: UUID) -> None:
+    """Add one bounded retry without changing extraction state or re-running OCR."""
+    from uuid import uuid4
+    async with sessions() as db:
+        await set_tenant_context(db, user_id)
+        pending = await db.scalar(select(DocumentProcessingJob.id).where(
+            DocumentProcessingJob.document_id == document_id,
+            DocumentProcessingJob.user_id == user_id,
+            DocumentProcessingJob.job_type == "index",
+            DocumentProcessingJob.status.in_(("pending", "running")),
+        ).limit(1))
+        if pending is None:
+            db.add(DocumentProcessingJob(
+                user_id=user_id, document_id=document_id, job_type="index", status="pending",
+                idempotency_key=f"index:{document_id}:{uuid4()}",
+            ))
+            await db.commit()
 
 
 async def _finish_job(sessions, job_id: UUID, user_id: UUID, document_id: UUID, worker_id: str,
@@ -420,6 +466,12 @@ async def recover_stale_jobs(sessions: async_sessionmaker[AsyncSession], *, work
             if document is None or document.processing_state == ProcessingState.DELETION_PENDING.value:
                 job.status, job.locked_until = "cancelled", None
                 job.last_reason_code = "document_deletion_requested"
+                recovered += 1
+                continue
+            if job.job_type == "index":
+                job.status = "pending" if job.attempts < job.max_attempts else "failed"
+                job.available_at, job.locked_until = now, None
+                job.last_reason_code = "stale_index_lease_recovered"
                 recovered += 1
                 continue
             target = ProcessingState.QUEUED if job.attempts < job.max_attempts else ProcessingState.FAILED

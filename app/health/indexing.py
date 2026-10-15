@@ -111,13 +111,24 @@ async def index_document(sessions: async_sessionmaker[AsyncSession], user_id: UU
                                      [str(chunk.id) for chunk in chunks])
     except (EmbeddingUnavailable, VectorStoreError) as exc:
         code = exc.args[0] if exc.args else "indexing_failed"
-        return await _record_failure(sessions, user_id, document_id, code)
+        # Preserve PostgreSQL chunks so owner-scoped keyword retrieval remains available
+        # while the model or vector service is repaired and indexing is retried.
+        return await _persist_chunks(
+            sessions, user_id, document_id, generation, chunks, None, [],
+            indexing_status="failed", indexing_error_code=code,
+        )
     except Exception as exc:
         logger.warning("document_indexing_failed document_id=%s error_type=%s", document_id, type(exc).__name__)
-        return await _record_failure(sessions, user_id, document_id, "indexing_failed")
+        return await _persist_chunks(
+            sessions, user_id, document_id, generation, chunks, None, [],
+            indexing_status="failed", indexing_error_code="indexing_failed",
+        )
 
 
-async def _persist_chunks(sessions, user_id, document_id, generation, chunks, store, new_ids):
+async def _persist_chunks(
+    sessions, user_id, document_id, generation, chunks, store, new_ids,
+    *, indexing_status: str | None = None, indexing_error_code: str | None = None,
+):
     async with sessions() as db:
         await set_tenant_context(db, user_id)
         doc = (await db.scalars(select(MedicalDocument).where(
@@ -137,17 +148,20 @@ async def _persist_chunks(sessions, user_id, document_id, generation, chunks, st
                 content=chunk.content, content_hash=chunk.content_hash,
                 extraction_generation=generation,
                 embedding_model=f"{settings.EMBEDDING_MODEL_NAME}@{settings.EMBEDDING_MODEL_REVISION}" if store else None))
-        doc.indexing_status = "completed" if store else "not_configured"
+        status = indexing_status or ("completed" if store else "not_configured")
+        doc.indexing_status = status
         doc.indexed_chunk_count = len(chunks) if store else 0
-        doc.indexing_model = f"{settings.EMBEDDING_MODEL_NAME}@{settings.EMBEDDING_MODEL_REVISION}" if store else None
-        doc.indexing_dimension = settings.EMBEDDING_DIMENSION if store else None
+        model = f"{settings.EMBEDDING_MODEL_NAME}@{settings.EMBEDDING_MODEL_REVISION}"
+        has_index_configuration = store is not None or indexing_status == "failed"
+        doc.indexing_model = model if has_index_configuration else None
+        doc.indexing_dimension = settings.EMBEDDING_DIMENSION if has_index_configuration else None
         doc.indexing_updated_at = datetime.now(timezone.utc)
-        doc.indexing_error_code = None if store else "qdrant_not_configured"
+        doc.indexing_error_code = indexing_error_code if indexing_status == "failed" else (None if store else "qdrant_not_configured")
         await db.commit()
     if store:
         await store.delete_obsolete(str(user_id), str(document_id), new_ids)
-    logger.info("document_indexing_finished document_id=%s chunks=%s status=%s", document_id, len(chunks), "completed" if store else "not_configured")
-    return {"status": "completed" if store else "not_configured", "chunk_count": len(chunks)}
+    logger.info("document_indexing_finished document_id=%s chunks=%s status=%s", document_id, len(chunks), status)
+    return {"status": status, "chunk_count": len(chunks) if store else 0}
 
 
 async def _record_failure(sessions, user_id, document_id, reason, status="failed"):

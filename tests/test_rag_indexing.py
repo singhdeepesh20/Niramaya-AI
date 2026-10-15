@@ -12,6 +12,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.core.config import settings
 from app.health import chunking, embeddings
 from app.health.vector_store import QdrantStore, VectorStoreError
+from app.health.dtos import HealthQuestion
+from app.health.repository import retrieve_authorized_chunks
 from app.database import Base
 from app.documents import models as _document_models  # register queue tables
 from app.health.models import DocumentPage, MedicalChunk, MedicalDocument
@@ -120,6 +122,63 @@ def test_indexing_persists_stable_chunks_and_retries_are_idempotent(monkeypatch)
         assert saved_doc.indexing_status == "completed" and saved_doc.indexed_chunk_count == 1
         assert ids_after_first[0] == store.points[-1]["id"]
         assert store.deleted_scope == (str(owner), str(doc_id), ids_after_first)
+        await engine.dispose()
+
+    asyncio.run(scenario())
+
+
+@pytest.mark.parametrize("failure_stage", ["embedding", "qdrant"])
+def test_vector_index_failure_keeps_chunks_available_for_keyword_search(monkeypatch, failure_stage):
+    async def scenario():
+        engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+        sessions = async_sessionmaker(engine, expire_on_commit=False)
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+        owner, doc_id = uuid4(), uuid4()
+        async with sessions() as db:
+            db.add(User(id=owner, username="fallback-user", email="fallback-user@example.com", hashed_password="unused"))
+            db.add(MedicalDocument(
+                id=doc_id, user_id=owner, name="Synthetic lab", original_filename="synthetic.pdf",
+                document_type="blood_test", content_type="application/pdf", file_size=10,
+                object_key="private/synthetic.pdf", processing_state="completed", processing_generation=3,
+            ))
+            db.add(DocumentPage(
+                document_id=doc_id, user_id=owner, extraction_generation=3, page_number=2,
+                extracted_text="Hemoglobin 13.5 g/dL", extraction_method="synthetic_test", character_count=21,
+            ))
+            await db.commit()
+
+        monkeypatch.setattr(settings, "QDRANT_URL", "http://qdrant.test")
+        monkeypatch.setattr(settings, "QDRANT_COLLECTION", "isolated-test")
+        if failure_stage == "embedding":
+            def fail_embedding(_texts):
+                raise embeddings.EmbeddingUnavailable("embedding_model_unavailable")
+            monkeypatch.setattr("app.health.indexing.embed_texts", fail_embedding)
+        else:
+            monkeypatch.setattr("app.health.indexing.embed_texts", lambda texts: [[0.01] * 384 for _ in texts])
+
+            class UnavailableStore:
+                async def ensure_collection(self):
+                    raise VectorStoreError("qdrant_unavailable")
+
+            monkeypatch.setattr("app.health.indexing.QdrantStore", UnavailableStore)
+
+        from app.health.indexing import index_document
+        outcome = await index_document(sessions, owner, doc_id)
+        async with sessions() as db:
+            rows = list((await db.scalars(select(MedicalChunk).where(
+                MedicalChunk.user_id == owner, MedicalChunk.document_id == doc_id,
+            ))).all())
+            document = await db.get(MedicalDocument, doc_id)
+            found = await retrieve_authorized_chunks(
+                db, owner, HealthQuestion(question="hemoglobin"), [], limit=5,
+            )
+        assert outcome["status"] == "failed"
+        assert outcome["chunk_count"] == 0  # No vector points were indexed.
+        assert len(rows) == 1 and "Hemoglobin 13.5 g/dL" in rows[0].content
+        assert len(found) == 1 and found[0][0].user_id == owner
+        assert document.indexing_status == "failed"
+        assert document.indexing_error_code in {"embedding_model_unavailable", "qdrant_unavailable"}
         await engine.dispose()
 
     asyncio.run(scenario())

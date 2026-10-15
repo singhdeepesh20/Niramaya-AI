@@ -1,0 +1,44 @@
+.rag-filter-panel{margin:0 0 14px;padding:15px 17px;background:#fff;border:1px solid #dfe9e9;border-radius:12px;box-shadow:0 5px 18px rgba(33,74,81,.025)}
+.rag-filter-heading{display:flex;align-items:center;justify-content:space-between;color:#345561}
+.rag-filter-heading>div>strong{font-size:11px}
+.rag-filter-heading p,.rag-filter-message{margin:4px 0 0;color:#82949a;font-size:9px;line-height:1.55}
+.rag-filter-message{display:flex;align-items:center;gap:7px;margin-top:12px}
+.rag-filter-message a{color:#167662;font-weight:700;text-decoration:none}
+.rag-document-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:13px}
+.rag-document-option{position:relative;min-width:0;min-height:52px;display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid #e4ecec;border-radius:9px;color:#52707a}
+.rag-document-option:not(.is-unavailable):hover{background:#f7fbfa;border-color:#bfdbd4}
+.rag-document-option input{position:absolute;width:1px;height:1px;opacity:0}
+.rag-document-option input:focus-visible+.rag-document-label .rag-document-check{outline:3px solid rgba(8,112,94,.2);outline-offset:2px}
+.rag-document-option input:checked+.rag-document-label .rag-document-check{background:#08705e;border-color:#08705e}
+.rag-document-label{flex:1;min-width:0;display:flex;align-items:center;gap:9px;cursor:pointer}
+.rag-document-option.is-unavailable .rag-document-label{cursor:default}
+.rag-document-check{width:17px;height:17px;flex:none;display:grid;place-items:center;border:1px solid #c8d7d8;border-radius:5px;color:white}
+.rag-document-label>svg{flex:none;color:#65838c}
+.rag-document-copy{flex:1;min-width:0}
+.rag-document-copy strong,.rag-document-copy small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rag-document-copy strong{font-size:9px;color:#3a5964}
+.rag-document-copy small{margin-top:4px;color:#84969b;font-size:8px;text-transform:capitalize}
+.rag-document-detail{flex:none;color:#287968;font-size:8px;font-weight:700;text-decoration:none}
+.rag-document-option.is-unavailable{background:#fafcfc;color:#90a0a5}
+.rag-filter-footnote{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:9px 1px 0;color:#809197;font-size:8px}
+.rag-filter-footnote button{border:0;background:transparent;color:#247966;font:inherit;font-weight:700;cursor:pointer}
+.rag-filter-footnote button:disabled{color:#a4b0b3;cursor:default}
+.rag-mode-notice{margin:9px 0;padding:10px 12px;border:1px solid #e4e9d8;border-radius:8px;background:#fbfcf5;color:#6e714b;font-size:10px;line-height:1.6}
+.rag-sources{display:grid;gap:8px;margin-top:14px}
+.rag-sources>h3{margin:0 0 1px;color:#71878c;font-size:9px;font-weight:750}
+.rag-source-card{padding:10px 11px;border:1px solid #e6eded;border-radius:9px;background:#fcfefe}
+.rag-source-heading{display:flex;align-items:center;gap:8px;min-width:0}
+.rag-source-icon{width:27px;height:27px;flex:none;display:grid;place-items:center;border-radius:8px;background:#edf6f3;color:#3f8977}
+.rag-source-title{flex:1;min-width:0}
+.rag-source-title strong,.rag-source-title small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rag-source-title strong{font-size:9px;color:#3f5d67}
+.rag-source-title small{margin-top:3px;color:#87999e;font-size:8px}
+.rag-source-link{display:inline-flex;align-items:center;gap:3px;flex:none;color:#217663;font-size:8px;font-weight:700;text-decoration:none}
+.rag-source-link:hover,.rag-document-detail:hover{text-decoration:underline}
+.rag-evidence-excerpt{display:flex;align-items:flex-start;gap:7px;margin:9px 0 0;padding:9px 10px;border-left:2px solid #a9d4c8;border-radius:0 6px 6px 0;background:#f4f9f7;color:#5b7478}
+.rag-evidence-excerpt svg{flex:none;margin-top:2px;color:#6d9a8c}
+.rag-evidence-excerpt p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:9px;line-height:1.6}
+.workspace-footer span{color:#9aa8ac}
+.chat-composer textarea:disabled{background:#f5f8f8;color:#74868b}
+.chat-composer>button:focus-visible,.chat-suggestions button:focus-visible,.workspace-signout:focus-visible,.rag-filter-footnote button:focus-visible,.workspace-text-button:focus-visible{outline:3px solid rgba(8,112,94,.25);outline-offset:2px}
+@media(max-width:620px){.rag-filter-panel{padding:12px}.rag-document-options{grid-template-columns:1fr}.rag-source-heading{flex-wrap:wrap}.rag-source-link{margin-left:35px}.workspace-footer{flex-wrap:wrap}}

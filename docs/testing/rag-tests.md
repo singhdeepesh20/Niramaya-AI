@@ -1,0 +1,3 @@
+# RAG testing
+
+Run `pytest -q`. Unit tests use deterministic fake vectors and local SQLite; they do not mutate production Qdrant. Cross-user tests exercise owner filters and PostgreSQL revalidation. To verify actual services, start a disposable local Qdrant, configure a local embedding model cache, apply `alembic upgrade head` to a disposable PostgreSQL database, then upload a synthetic PDF and query it with an authenticated account. The repository does not claim that a real configured Qdrant/PostgreSQL end-to-end run has occurred unless that environment is available and the workflow is executed.

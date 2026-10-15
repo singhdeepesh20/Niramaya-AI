@@ -4,11 +4,11 @@ import Link from "next/link";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUp, FileText, LoaderCircle, LogOut, MessageCircle, RefreshCw, ShieldCheck, Sparkles } from "lucide-react";
-import { ApiError, ChatHistoryItem, Citation, healthApi } from "@/lib/api";
+import { ApiError, ChatHistoryItem, Citation, EvidenceItem, healthApi } from "@/lib/api";
 import { BrandMark } from "@/components/auth-layout";
 import { clearSession, handleSessionError, readAccessToken } from "@/lib/session";
 
-type ChatEntry = { id: string; question: string; answer: string; citations: Citation[]; created_at: string };
+type ChatEntry = { id: string; question: string; answer: string; citations: Citation[]; evidence?: EvidenceItem[]; created_at: string; generation_status?: string };
 
 function historyEntry(item: ChatHistoryItem): ChatEntry { return { ...item }; }
 
@@ -51,6 +51,8 @@ export default function AssistantPage() {
         question: cleanQuestion,
         answer: result.answer,
         citations: result.citations,
+        evidence: result.evidence,
+        generation_status: result.generation_status,
         created_at: new Date().toISOString(),
       }, ...current]);
       input.current?.focus();
@@ -71,8 +73,9 @@ export default function AssistantPage() {
           {loading ? <div className="workspace-state"><LoaderCircle size={19} className="spin" /> Loading your conversation…</div>
             : entries.length ? <div className="chat-messages">{entries.map((entry) => <article className="chat-turn" key={entry.id}>
               <div className="chat-question"><span>You</span><p>{entry.question}</p></div>
-              <div className="chat-answer"><span className="chat-assistant-label"><Sparkles size={14} /> Niramaya-AI</span><p className="chat-answer-text">{entry.answer}</p>
+              <div className="chat-answer"><span className="chat-assistant-label"><Sparkles size={14} /> {entry.generation_status === "evidence_only" ? "Authorized evidence" : "Niramaya-AI"}</span><p className="chat-answer-text">{entry.answer}</p>
                 {entry.citations.length > 0 && <div className="chat-citations"><strong>Sources returned by the assistant</strong>{entry.citations.map((citation, index) => <Link key={`${entry.id}-${citation.document_id}-${citation.page_number}-${index}`} href={`/documents/${citation.document_id}`} className="chat-citation"><FileText size={15} /><span>{citation.document_name}{citation.page_number ? ` · Page ${citation.page_number}` : ""}</span></Link>)}</div>}
+                {entry.evidence?.length ? <div className="chat-citations"><strong>Retrieved evidence</strong>{entry.evidence.map((item, index) => <Link key={`${entry.id}-evidence-${index}`} href={`/documents/${item.document_id}`} className="chat-citation"><FileText size={15} /><span>{item.document_name}{item.page_number ? ` · Page ${item.page_number}` : ""}: {item.excerpt}</span></Link>)}</div> : null}
                 {!entry.citations.length && <p className="chat-no-citations">No citations were returned for this response.</p>}
               </div>
             </article>)}</div>

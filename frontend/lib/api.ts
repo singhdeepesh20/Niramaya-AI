@@ -81,13 +81,13 @@ async function authenticatedGet<T>(path: string, token: string): Promise<T> {
   return payload as T;
 }
 
-async function authenticatedRequest<T>(path: string, token: string, init: RequestInit = {}): Promise<T> {
+async function authenticatedRequest<T>(path: string, token: string, init: RequestInit = {}, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
       ...init,
       headers: { Accept: "application/json", Authorization: `Bearer ${token}`, ...init.headers },
-      signal: requestTimeoutSignal(),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
     });
   } catch {
@@ -112,6 +112,7 @@ export type MedicalDocument = {
   processing_state: "uploaded" | "queued" | "processing" | "review_required" | "completed" | "failed" | "deletion_pending";
   processing_version: number; created_at: string; updated_at: string;
 };
+export type IndexingStatus = { document_id: string; extraction_generation: number; status: string; chunk_count: number; model: string | null; dimension: number | null; attempts: number; updated_at: string | null; error_code: string | null };
 export type ProcessingStageResult = { stage: string; status: string; attempts: number; reason_code: string | null; started_at: string | null; finished_at: string | null };
 export type ProcessingStatus = { document_id: string; document_type: string; processing_state: string; processing_version: number; processing_generation: number; processing_updated_at: string; processing: Record<string, unknown>; stages: ProcessingStageResult[] };
 export type ExtractedEntity = { id: string; category: string; name: string; original_name: string | null; value: string | null; numeric_value: number | null; unit: string | null; normalized_value: string | null; normalized_unit: string | null; reference_range: string | null; reported_abnormal: boolean | null; qualitative_value: string | null; page_number: number | null; source_excerpt: string | null; extraction_method: string; rule_id: string | null; quality_score: number | null; warnings: string[]; review_status: string };
@@ -139,8 +140,8 @@ export type PresignedDocumentUrl = { url: string; expires_in: number };
 export type DocumentMetadata = { id: string; name: string; document_type: string; document_date: string | null };
 export type Citation = { document_id: string; document_name: string; page_number: number | null };
 export type EvidenceItem = Citation & { excerpt: string };
-export type HealthAnswer = { answer: string; citations: Citation[]; evidence: EvidenceItem[] };
-export type ChatHistoryItem = { id: string; question: string; answer: string; citations: Citation[]; created_at: string };
+export type HealthAnswer = { answer: string; citations: Citation[]; evidence: EvidenceItem[]; generation_status: "generated" | "evidence_only" | "insufficient_evidence" };
+export type ChatHistoryItem = { id: string; question: string; answer: string; citations: Citation[]; created_at: string; generation_status?: string };
 export type DocumentFilters = { q?: string; document_type?: string; date_from?: string; date_to?: string; sort?: "newest" | "oldest"; limit?: number; offset?: number };
 
 function queryString(filters: DocumentFilters): string {
@@ -190,6 +191,8 @@ export const documentsApi = {
   pages: (token: string, id: string) => authenticatedGet<ExtractedPages>(`/api/v1/documents/${id}/pages`, token),
   tables: (token: string, id: string) => authenticatedGet<ExtractedTables>(`/api/v1/documents/${id}/tables`, token),
   history: (token: string, id: string) => authenticatedGet<ProcessingHistory>(`/api/v1/documents/${id}/history`, token),
+  indexingStatus: (token: string, id: string) => authenticatedGet<IndexingStatus>(`/api/v1/documents/${id}/indexing-status`, token),
+  reindex: (token: string, id: string) => authenticatedRequest<IndexingStatus>(`/api/v1/documents/${id}/reindex`, token, { method: "POST" }),
   metadata: (token: string, id: string) => authenticatedGet<DocumentMetadata>(`/api/v1/health/documents/${id}`, token),
   upload: uploadDocument,
   viewUrl: (token: string, id: string) => authenticatedGet<PresignedDocumentUrl>(`/api/v1/documents/${id}/view-url`, token),
@@ -202,6 +205,6 @@ export const documentsApi = {
 export const healthApi = {
   ask: (token: string, question: string) => authenticatedRequest<HealthAnswer>("/api/v1/health/ask", token, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ question }),
-  }),
+  }, 110_000),
   history: (token: string) => authenticatedGet<ChatHistoryItem[]>("/api/v1/health/history", token),
 };

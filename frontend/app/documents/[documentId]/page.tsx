@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink, FileImage, FileText, LoaderCircle, LogOut, RefreshCw, ShieldCheck, Trash2 } from "lucide-react";
-import { ApiError, documentsApi, MedicalDocument, processingStateLabels, ProcessingStatus, ExtractedEntities, ExtractedPages, ExtractedTables, ProcessingHistory } from "@/lib/api";
+import { ApiError, documentsApi, MedicalDocument, processingStateLabels, ProcessingStatus, ExtractedEntities, ExtractedPages, ExtractedTables, ProcessingHistory, IndexingStatus } from "@/lib/api";
 import { BrandMark } from "@/components/auth-layout";
 import { clearSession, handleSessionError, readAccessToken } from "@/lib/session";
 
@@ -27,6 +27,8 @@ export default function DocumentDetailPage() {
   const [pages, setPages] = useState<ExtractedPages | null>(null);
   const [tables, setTables] = useState<ExtractedTables | null>(null);
   const [history, setHistory] = useState<ProcessingHistory | null>(null);
+  const [indexing, setIndexing] = useState<IndexingStatus | null>(null);
+  const indexingStatus = indexing?.status;
   const state = document?.processing_state;
 
   const load = useCallback(async (authToken: string, quiet = false) => {
@@ -34,12 +36,12 @@ export default function DocumentDetailPage() {
     try {
       const result = await documentsApi.get(authToken, documentId);
       setDocument(result); setError("");
-      const [statusResult, entityResult, pageResult, tableResult, historyResult] = await Promise.all([
+      const [statusResult, entityResult, pageResult, tableResult, historyResult, indexingResult] = await Promise.all([
         documentsApi.status(authToken, documentId), documentsApi.extractions(authToken, documentId),
         documentsApi.pages(authToken, documentId), documentsApi.tables(authToken, documentId),
-        documentsApi.history(authToken, documentId),
+        documentsApi.history(authToken, documentId), documentsApi.indexingStatus(authToken, documentId),
       ]);
-      setProcessing(statusResult); setExtractions(entityResult); setPages(pageResult); setTables(tableResult); setHistory(historyResult);
+      setProcessing(statusResult); setExtractions(entityResult); setPages(pageResult); setTables(tableResult); setHistory(historyResult); setIndexing(indexingResult);
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) { clearSession(router); return; }
       if (cause instanceof ApiError && cause.status === 404 && document?.processing_state === "deletion_pending") {
@@ -85,6 +87,24 @@ export default function DocumentDetailPage() {
     return () => { alive = false; if (timer) clearTimeout(timer); };
   }, [documentId, router, state, token]);
 
+  useEffect(() => {
+    if (!token || !documentId || !indexingStatus || !["queued", "indexing"].includes(indexingStatus)) return;
+    let alive = true;
+    let timer: ReturnType<typeof setTimeout>;
+    const poll = async () => {
+      try {
+        const result = await documentsApi.indexingStatus(token, documentId);
+        if (!alive) return;
+        setIndexing(result);
+        if (["queued", "indexing"].includes(result.status)) timer = setTimeout(poll, 4000);
+      } catch (cause) {
+        if (alive && cause instanceof ApiError && cause.status === 401) clearSession(router);
+      }
+    };
+    timer = setTimeout(poll, 4000);
+    return () => { alive = false; clearTimeout(timer); };
+  }, [documentId, indexingStatus, router, token]);
+
   async function openPreview() {
     if (!token || !document) return;
     setBusy(true); setError("");
@@ -98,6 +118,14 @@ export default function DocumentDetailPage() {
     setBusy(true); setError(""); setNotice("");
     try { setDocument(await documentsApi.reprocess(token, document.id)); setNotice("Reprocessing was queued by the backend."); }
     catch (cause) { setError(handleSessionError(cause, router)); }
+    finally { setBusy(false); }
+  }
+
+  async function reindex() {
+    if (!token || !document || busy) return;
+    setBusy(true); setError(""); setNotice("");
+    try { setIndexing(await documentsApi.reindex(token, document.id)); setNotice("A vector reindex job was queued. Extraction results remain unchanged."); }
+    catch (cause) { if (cause instanceof ApiError && cause.status === 401) clearSession(router); else setError(handleSessionError(cause, router)); }
     finally { setBusy(false); }
   }
 
@@ -118,7 +146,8 @@ export default function DocumentDetailPage() {
         <div className="detail-grid"><section className="workspace-panel detail-main">
           <div className="workspace-panel-heading"><div><h2>Processing status</h2><p>Current state reported by the document service</p></div><button className="workspace-icon-button" onClick={() => void load(token, true)} disabled={refreshing} aria-label="Refresh report status"><RefreshCw size={16} className={refreshing ? "spin" : ""} /></button></div>
           <div className={`detail-status detail-${state}`}><span className="detail-status-dot" /><div><strong>{state ? processingStateLabels[state] : "Status unavailable"}</strong><p>{state === "queued" || state === "uploaded" ? "The upload is confirmed. Processing has not completed yet." : state === "processing" ? "A worker is processing this report. Status refreshes automatically while work is active." : state === "review_required" ? "The backend indicates that review is needed. See the available review contract below." : state === "failed" ? "The backend reports a processing failure. You can request reprocessing if available." : state === "completed" ? "The backend reports that configured mandatory processing stages succeeded." : state === "deletion_pending" ? "Deletion has been requested and is still being reconciled." : "The current processing state could not be determined."}</p></div></div>
-          <div className="detail-actions"><button className="workspace-primary" onClick={() => void openPreview()} disabled={busy || document.upload_status !== "ready"}><ExternalLink size={16} /> Open secure preview</button>{(state === "failed" || state === "completed" || state === "review_required") && <button className="workspace-secondary" onClick={() => void reprocess()} disabled={busy}><RefreshCw size={15} /> Reprocess</button>}<button className="workspace-danger" onClick={() => void remove()} disabled={busy || state === "deletion_pending"}><Trash2 size={15} /> Delete report</button></div>
+          <div className="detail-status"><span className="detail-status-dot" /><div><strong>Vector indexing: {indexing?.status.replace(/_/g, " ") ?? "status unavailable"}</strong><p>{indexing?.chunk_count ?? 0} chunks{indexing?.model ? ` · ${indexing.model} · ${indexing.dimension} dimensions` : ""}{indexing?.updated_at ? ` · Updated ${new Date(indexing.updated_at).toLocaleString()}` : ""}{indexing?.error_code ? ` · ${indexing.error_code.replace(/_/g, " ")}` : ""}</p></div></div>
+          <div className="detail-actions"><button className="workspace-primary" onClick={() => void openPreview()} disabled={busy || document.upload_status !== "ready"}><ExternalLink size={16} /> Open secure preview</button>{(state === "failed" || state === "completed" || state === "review_required") && <button className="workspace-secondary" onClick={() => void reprocess()} disabled={busy}><RefreshCw size={15} /> Reprocess</button>}{(state === "completed" || state === "review_required") && <button className="workspace-secondary" onClick={() => void reindex()} disabled={busy || indexing?.status === "queued" || indexing?.status === "indexing"}><RefreshCw size={15} /> Reindex vectors</button>}<button className="workspace-danger" onClick={() => void remove()} disabled={busy || state === "deletion_pending"}><Trash2 size={15} /> Delete report</button></div>
           <section className="document-results"><div className="workspace-panel-heading"><div><h2>Extracted information</h2><p>Rule-based extraction from this report · generation {processing?.processing_generation ?? extractions?.generation ?? 0}</p></div></div>
             {processing?.processing && <div className="processing-summary"><strong>Classification:</strong> {String((processing.processing.classification as Record<string, unknown> | undefined)?.type ?? document.document_type)}{typeof (processing.processing.classification as Record<string, unknown> | undefined)?.rule_id === "string" && <span> · rule {String((processing.processing.classification as Record<string, unknown>).rule_id)}</span>}{Array.isArray(processing.processing.review_reasons) && (processing.processing.review_reasons as string[]).length > 0 && <p>Review notes: {(processing.processing.review_reasons as string[]).join(", ")}</p>}</div>}
             {state === "queued" || state === "processing" || state === "uploaded" ? <p className="result-empty">Extraction results will appear here after the worker processes the report.</p> : extractions?.items.length ? <div className="result-table-wrap"><table className="result-table"><thead><tr><th>Finding</th><th>Value</th><th>Normalized</th><th>Reference range</th><th>Source</th></tr></thead><tbody>{extractions.items.map((item) => <tr key={item.id}><td><strong>{item.name}</strong><small>{item.category.replace(/_/g, " ")}</small></td><td>{item.value ?? item.qualitative_value ?? "—"}{item.reported_abnormal === true && <em className="result-flag">Flagged</em>}</td><td>{item.normalized_value ? `${item.normalized_value} ${item.normalized_unit ?? ""}` : "—"}</td><td>{item.reference_range ?? "—"}</td><td>{item.page_number ? `Page ${item.page_number}` : "—"}<small>{item.extraction_method}</small></td></tr>)}</tbody></table></div> : <p className="result-empty">No supported findings were extracted. This may mean the report format is not recognized or text extraction needs review.</p>}

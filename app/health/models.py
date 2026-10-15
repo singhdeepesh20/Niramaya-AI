@@ -32,6 +32,13 @@ class MedicalDocument(Base):
     processing_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     processing_generation: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
     processing_updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    indexing_status: Mapped[str] = mapped_column(String(24), nullable=False, default="not_started", server_default="not_started")
+    indexed_chunk_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    indexing_model: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    indexing_dimension: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    indexing_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    indexing_updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    indexing_error_code: Mapped[str | None] = mapped_column(String(120), nullable=True)
     metadata_json: Mapped[dict] = mapped_column("metadata", JSON, nullable=False, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
@@ -144,8 +151,12 @@ class MedicalChunk(Base):
     user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     document_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), nullable=False)
     page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    section: Mapped[str | None] = mapped_column(String(100), nullable=True)
     chunk_index: Mapped[int] = mapped_column(Integer, nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False, default="")
+    extraction_generation: Mapped[int] = mapped_column(Integer, nullable=False, default=0, server_default="0")
+    embedding_model: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())
 
 
@@ -157,5 +168,6 @@ class HealthChatMessage(Base):
     user_id: Mapped[UUID] = mapped_column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     question: Mapped[str] = mapped_column(String(1000), nullable=False)
     answer: Mapped[str] = mapped_column(Text, nullable=False)
+    generation_status: Mapped[str] = mapped_column(String(24), nullable=False, default="generated", server_default="generated")
     citations: Mapped[list[dict]] = mapped_column(JSON, nullable=False, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, server_default=func.now())

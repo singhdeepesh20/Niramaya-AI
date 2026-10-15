@@ -151,3 +151,15 @@ class ProcessingStatusResponse(BaseModel):
     processing_updated_at: datetime
     processing: dict
     stages: list[ProcessingStagePublic]
+
+
+class IndexingStatusResponse(BaseModel):
+    document_id: UUID
+    extraction_generation: int
+    status: str
+    chunk_count: int
+    model: str | None
+    dimension: int | None
+    attempts: int
+    updated_at: datetime | None
+    error_code: str | None

@@ -41,6 +41,7 @@ class HealthAnswer(BaseModel):
     answer: str
     citations: list[Citation]
     evidence: list[EvidenceItem]
+    generation_status: str = "generated"
 
 
 class ChatHistoryItem(BaseModel):
@@ -49,5 +50,6 @@ class ChatHistoryItem(BaseModel):
     id: UUID
     question: str
     answer: str
+    generation_status: str = "generated"
     citations: list[Citation]
     created_at: datetime

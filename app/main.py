@@ -12,6 +12,7 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
+from app.core.csrf import validate_csrf
 from app.core.errors import APIError
 from app.core.rate_limit import LoginRateLimiter
 from app.database import engine, get_db
@@ -44,19 +45,34 @@ def create_app() -> FastAPI:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=settings.FRONTEND_ORIGINS,
-            allow_credentials=False,
-            allow_methods=["GET", "POST", "DELETE"],
-            allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
-            expose_headers=["X-Request-ID"],
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+            allow_headers=["Authorization", "Content-Type", "X-Request-ID", "X-CSRF-Token"],
+            expose_headers=["X-Request-ID", "X-CSRF-Token"],
         )
 
     @app.middleware("http")
-    async def add_request_id(request: Request, call_next):
+    async def add_request_id_and_security_headers(request: Request, call_next):
         proposed_id = request.headers.get("X-Request-ID", "")
         request_id = proposed_id if _REQUEST_ID_PATTERN.fullmatch(proposed_id) else str(uuid4())
         request.state.request_id = request_id
+
+        # Enforce CSRF validation for state-changing requests with cookie credentials
+        try:
+            validate_csrf(request)
+        except APIError as exc:
+            return JSONResponse(
+                status_code=exc.status_code,
+                content={"error": {"code": exc.code, "message": exc.message, "request_id": request_id}},
+                headers=exc.headers,
+            )
+
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "geolocation=(), camera=(), microphone=()"
         return response
 
     @app.exception_handler(APIError)

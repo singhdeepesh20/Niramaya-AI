@@ -15,6 +15,19 @@ os.environ["ACCESS_TOKEN_EXPIRE_MINUTES"] = "30"
 os.environ["JWT_ISSUER"] = ""
 os.environ["JWT_AUDIENCE"] = ""
 os.environ["FRONTEND_ORIGINS"] = "[]"
+# Test runs must never inherit real cloud endpoints or credentials from a local
+# .env file. Provider-specific behavior is exercised through explicit fakes.
+for setting_name in (
+    "S3_BUCKET_NAME",
+    "AWS_ACCESS_KEY_ID",
+    "AWS_SECRET_ACCESS_KEY",
+    "AWS_SESSION_TOKEN",
+    "QDRANT_URL",
+    "QDRANT_API_KEY",
+    "LLM_API_KEY",
+):
+    os.environ[setting_name] = ""
+os.environ["EMBEDDING_ALLOW_DOWNLOAD"] = "false"
 
 from app.database import Base, get_db  # noqa: E402
 from app.main import create_app  # noqa: E402

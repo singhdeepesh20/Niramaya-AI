@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     JWT_ISSUER: str | None = None
     JWT_AUDIENCE: str | None = None
     FRONTEND_ORIGINS: list[str] = Field(default_factory=list)
+    COOKIE_NAME: str = "niramaya_access_token"
+    COOKIE_SECURE: bool = False
+    COOKIE_SAMESITE: Literal["lax", "strict", "none"] = "lax"
+    COOKIE_DOMAIN: str | None = None
+    CSRF_COOKIE_NAME: str = "niramaya_csrf_token"
+    CSRF_HEADER_NAME: str = "X-CSRF-Token"
     LLM_API_BASE_URL: str = "https://api.groq.com/openai/v1"
     LLM_API_KEY: SecretStr | None = None
     LLM_MODEL: str = "openai/gpt-oss-120b"

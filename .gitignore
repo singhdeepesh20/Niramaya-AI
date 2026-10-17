@@ -31,6 +31,8 @@ build/
 .cache/
 logs/
 *.log
+/tmp/
+/output/
 
 # Local editor and operating-system files.
 .DS_Store

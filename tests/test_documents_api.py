@@ -66,7 +66,9 @@ def create_user(client: TestClient, username: str) -> str:
     assert result.status_code == 201, result.text
     login = client.post("/api/v1/users/login", json={"username": username, "password": "A-strong-test-password-123!"})
     assert login.status_code == 200, login.text
-    return login.json()["access_token"]
+    token = login.json()["access_token"]
+    client.cookies.clear()
+    return token
 
 
 def upload(client: TestClient, token: str, name: str = "lab.pdf", document_type: str = "blood_test"):

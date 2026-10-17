@@ -210,3 +210,66 @@ def test_security_headers_present_on_responses(client: TestClient):
     assert res.headers.get("X-Frame-Options") == "DENY"
     assert res.headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
 
+
+def test_two_user_complete_idor_matrix(client: TestClient):
+    storage = FakeIsolatedStorage()
+    client.app.dependency_overrides[get_s3_storage] = lambda: storage
+
+    # Register and login User A and User B
+    _register(client, "alice_idor")
+    res_a = client.post("/api/v1/users/login", json={"username": "alice_idor", "password": "VeryStrongPassword-123!"})
+    token_a = res_a.json()["access_token"]
+    user_a_id = res_a.cookies.get(settings.COOKIE_NAME)  # token or header
+
+    _register(client, "bob_idor")
+    res_b = client.post("/api/v1/users/login", json={"username": "bob_idor", "password": "VeryStrongPassword-123!"})
+    token_b = res_b.json()["access_token"]
+
+    client.cookies.clear()
+
+    # User B uploads a document
+    doc_b_res = client.post(
+        "/api/v1/documents/upload",
+        headers={"Authorization": f"Bearer {token_b}"},
+        files={"file": ("bobs_secret_report.pdf", b"%PDF-1.4 confidential medical record for Bob", "application/pdf")},
+        data={"document_type": "blood_test"},
+    )
+    assert doc_b_res.status_code == 201
+    doc_b_id = doc_b_res.json()["id"]
+
+    headers_a = {"Authorization": f"Bearer {token_a}"}
+
+    # Verify User A cannot access any endpoint for User B's document (must consistently 404)
+    endpoints = [
+        f"/api/v1/documents/{doc_b_id}",
+        f"/api/v1/documents/{doc_b_id}/extractions",
+        f"/api/v1/documents/{doc_b_id}/pages",
+        f"/api/v1/documents/{doc_b_id}/tables",
+        f"/api/v1/documents/{doc_b_id}/history",
+        f"/api/v1/documents/{doc_b_id}/status",
+        f"/api/v1/documents/{doc_b_id}/indexing-status",
+        f"/api/v1/documents/{doc_b_id}/view-url",
+        f"/api/v1/documents/{doc_b_id}/download-url",
+        f"/api/v1/health/documents/{doc_b_id}",
+    ]
+
+    for endpoint in endpoints:
+        resp = client.get(endpoint, headers=headers_a)
+        assert resp.status_code == 404, f"Failed IDOR on {endpoint}: expected 404, got {resp.status_code}"
+
+    # Verify User A cannot mutate or delete User B's document
+    del_resp = client.delete(f"/api/v1/documents/{doc_b_id}", headers=headers_a)
+    assert del_resp.status_code == 404
+
+    reproc_resp = client.post(f"/api/v1/documents/{doc_b_id}/reprocess", headers=headers_a)
+    assert reproc_resp.status_code == 404
+
+    review_resp = client.post(f"/api/v1/documents/{doc_b_id}/review/complete", headers=headers_a)
+    assert review_resp.status_code == 404
+
+    # Verify document B still exists safely for User B
+    b_verify = client.get(f"/api/v1/documents/{doc_b_id}", headers={"Authorization": f"Bearer {token_b}"})
+    assert b_verify.status_code == 200
+    assert b_verify.json()["original_filename"] == "bobs_secret_report.pdf"
+
+

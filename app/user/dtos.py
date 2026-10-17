@@ -60,3 +60,9 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
+    csrf_token: str | None = None
+
+
+class CSRFResponse(BaseModel):
+    csrf_token: str
+

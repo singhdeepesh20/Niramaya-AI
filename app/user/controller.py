@@ -2,7 +2,7 @@ from typing import Annotated
 from uuid import UUID
 
 import jwt
-from fastapi import Depends
+from fastapi import Depends, Request, Response
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt.exceptions import InvalidTokenError
 from sqlalchemy import or_, select
@@ -10,6 +10,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
+from app.core.csrf import generate_csrf_token
 from app.core.errors import APIError
 from app.core.security import DUMMY_PASSWORD_HASH, create_access_token, hash_password, verify_password
 from app.database import get_db
@@ -59,7 +60,7 @@ async def register_user(payload: RegistrationRequest, db: AsyncSession) -> User:
     return user
 
 
-async def login_user(payload: LoginRequest, db: AsyncSession) -> TokenResponse:
+async def login_user(payload: LoginRequest, db: AsyncSession, response: Response | None = None) -> TokenResponse:
     user = await db.scalar(select(User).where(User.username == payload.username))
     stored_hash = user.hashed_password if user is not None else DUMMY_PASSWORD_HASH
     password_valid = verify_password(payload.password, stored_hash)
@@ -74,18 +75,55 @@ async def login_user(payload: LoginRequest, db: AsyncSession) -> TokenResponse:
         raise APIError(403, "account_inactive", "This account is inactive.")
 
     token, expires_in = create_access_token(user.id)
-    return TokenResponse(access_token=token, expires_in=expires_in)
+    csrf_token = generate_csrf_token()
+
+    if response is not None:
+        response.set_cookie(
+            key=settings.COOKIE_NAME,
+            value=token,
+            httponly=True,
+            secure=settings.COOKIE_SECURE,
+            samesite=settings.COOKIE_SAMESITE,
+            path="/",
+            domain=settings.COOKIE_DOMAIN,
+            max_age=expires_in,
+        )
+        response.set_cookie(
+            key=settings.CSRF_COOKIE_NAME,
+            value=csrf_token,
+            httponly=False,
+            secure=settings.COOKIE_SECURE,
+            samesite=settings.COOKIE_SAMESITE,
+            path="/",
+            domain=settings.COOKIE_DOMAIN,
+            max_age=expires_in,
+        )
+
+    return TokenResponse(access_token=token, expires_in=expires_in, csrf_token=csrf_token)
+
+
+def logout_user(response: Response) -> dict[str, str]:
+    response.delete_cookie(key=settings.COOKIE_NAME, path="/", domain=settings.COOKIE_DOMAIN)
+    response.delete_cookie(key=settings.CSRF_COOKIE_NAME, path="/", domain=settings.COOKIE_DOMAIN)
+    return {"message": "Logged out successfully."}
 
 
 async def get_current_user(
+    request: Request,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> User:
-    if credentials is None or credentials.scheme.lower() != "bearer":
+    raw_token: str | None = None
+    if credentials is not None and credentials.scheme.lower() == "bearer":
+        raw_token = credentials.credentials
+    elif request is not None:
+        raw_token = request.cookies.get(settings.COOKIE_NAME)
+
+    if not raw_token:
         raise APIError(
             401,
             "authentication_required",
-            "A valid bearer token is required.",
+            "A valid bearer token or session cookie is required.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -97,7 +135,7 @@ async def get_current_user(
         required_claims.append("aud")
     try:
         claims = jwt.decode(
-            credentials.credentials,
+            raw_token,
             settings.JWT_SECRET_KEY.get_secret_value(),
             algorithms=[settings.JWT_ALGORITHM],
             issuer=settings.JWT_ISSUER,

@@ -1,0 +1,18 @@
+stateDiagram-v2
+  [*] --> uploaded
+  uploaded --> queued
+  uploaded --> deletion_pending
+  queued --> processing
+  queued --> deletion_pending
+  processing --> completed
+  processing --> review_required
+  processing --> failed
+  processing --> queued: retryable or stale lease
+  processing --> deletion_pending
+  review_required --> queued: owner reprocess
+  completed --> queued: owner reprocess
+  failed --> queued: owner reprocess
+  review_required --> deletion_pending
+  completed --> deletion_pending
+  failed --> deletion_pending
+  deletion_pending --> [*]: external cleanup then database cascade

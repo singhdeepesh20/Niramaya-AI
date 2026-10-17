@@ -1,0 +1,17 @@
+sequenceDiagram
+  participant U as User
+  participant W as Next.js browser
+  participant A as FastAPI
+  participant D as PostgreSQL
+  U->>W: username/password
+  W->>A: POST /api/v1/users/login
+  A->>D: lookup username/hash
+  D-->>A: account row
+  A->>A: Argon2 verify; sign HS256 JWT
+  A-->>W: bearer token + expires_in
+  W->>W: sessionStorage token
+  W->>A: protected request + Bearer JWT
+  A->>A: verify signature/claims/expiry
+  A->>D: resolve sub UUID and active status
+  D-->>A: user row
+  A-->>W: owner-authorized response

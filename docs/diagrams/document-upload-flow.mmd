@@ -1,0 +1,14 @@
+sequenceDiagram
+  participant W as Browser
+  participant A as FastAPI
+  participant S as Private S3
+  participant D as PostgreSQL
+  participant P as Worker
+  W->>A: multipart file + bearer token
+  A->>A: validate owner, suffix, MIME, signature, size
+  A->>S: upload to server-generated key
+  S-->>A: success
+  A->>D: document row + queued event + outbox job (transaction)
+  D-->>A: commit
+  A-->>W: 201 metadata (not processing completion)
+  P->>D: claim due job and lease

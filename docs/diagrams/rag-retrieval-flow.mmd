@@ -1,0 +1,18 @@
+sequenceDiagram
+  participant U as Authenticated user
+  participant A as FastAPI health route
+  participant Q as Qdrant
+  participant D as PostgreSQL
+  participant L as Optional LLM
+  U->>A: question + optional metadata filters
+  A->>A: derive owner only from verified JWT
+  A->>Q: vector query with mandatory owner/model filters
+  Q-->>A: candidate chunk IDs only
+  A->>D: lexical query + owner/document/generation/state filters
+  A->>D: re-resolve vector IDs under identical authorization predicates
+  D-->>A: authorized chunk text + document metadata
+  A->>A: hybrid rank, bound context, build citations/evidence
+  A->>L: question + authorized evidence only (if enabled)
+  L-->>A: generated text
+  A->>D: save owner-scoped chat history
+  A-->>U: answer, evidence, citations, generation status

@@ -1,0 +1,18 @@
+flowchart TD
+  Upload[Validated upload] --> Obj[S3 original]
+  Upload --> Job[PostgreSQL document + outbox]
+  Job --> Claim[Worker claim + lease]
+  Claim --> Download[Download to temporary directory]
+  Download --> Convert[PDF or image-to-one-page-PDF]
+  Convert --> Text[PyMuPDF text and table extraction]
+  Text --> OCR{Low text and OCR available?}
+  OCR -->|Yes| Tesseract[Local Tesseract]
+  OCR -->|No| Rule[Classification + entity/section rules]
+  Tesseract --> Rule
+  Rule --> Results[Persist pages, tables, entities, provenance, stages]
+  Results --> Decision{Review reasons?}
+  Decision -->|Yes| Review[review_required]
+  Decision -->|No| Complete[completed]
+  Results --> Index[Independent chunk/index job]
+  Index --> PGChunks[Persist PostgreSQL chunks]
+  Index --> Vector[Optional embeddings + Qdrant]

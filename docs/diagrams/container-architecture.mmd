@@ -1,0 +1,31 @@
+flowchart TB
+  subgraph Browser[Browser]
+    Next[Next.js App Router]
+    Session[sessionStorage bearer token]
+    Client[Typed API client]
+    Next --> Client
+    Client --> Session
+  end
+  subgraph App[Application runtime]
+    FastAPI[FastAPI routes and middleware]
+    Auth[JWT/current-user dependency]
+    Worker[Separate DB polling worker]
+    Parse[PyMuPDF/Tesseract/rule parser]
+    Embedding[Local sentence-transformers]
+    FastAPI --> Auth
+    Worker --> Parse
+    Worker --> Embedding
+  end
+  DB[(PostgreSQL + Alembic schema/RLS)]
+  S3[(Private object storage)]
+  Vec[(Optional Qdrant)]
+  Provider[Optional compatible chat API]
+  Client --> FastAPI
+  Auth --> DB
+  FastAPI --> DB
+  FastAPI --> S3
+  Worker --> DB
+  Worker --> S3
+  Worker --> Vec
+  FastAPI --> Vec
+  FastAPI --> Provider

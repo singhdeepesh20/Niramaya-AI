@@ -1,0 +1,11 @@
+erDiagram
+  users ||--o{ medical_documents : owns
+  users ||--o{ health_chat_messages : owns
+  users ||--o{ document_processing_jobs : owns
+  users ||--o{ document_processing_events : owns
+  medical_documents ||--o{ medical_entities : produces
+  medical_documents ||--o{ medical_document_pages : has
+  medical_documents ||--o{ medical_document_tables : has
+  medical_documents ||--o{ medical_document_chunks : chunks
+  medical_documents ||--o{ document_stage_runs : records
+  medical_documents ||--o{ document_processing_jobs : queues

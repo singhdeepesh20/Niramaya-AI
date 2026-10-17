@@ -1,0 +1,16 @@
+flowchart LR
+  User --> Browser[Next.js browser app]
+  Browser -->|HTTPS/JSON + bearer token| API[FastAPI]
+  API --> PG[(PostgreSQL)]
+  API --> S3[(Private S3)]
+  PG --> Worker[Polling worker]
+  Worker --> S3
+  Worker --> Parse[PyMuPDF / optional local Tesseract / rules]
+  Parse --> PG
+  PG --> Index[Chunk + local embedding stage]
+  Index --> Qdrant[(Optional Qdrant)]
+  API --> Retrieval[Owner-scoped retrieval]
+  Retrieval --> PG
+  Retrieval --> Qdrant
+  Retrieval -->|authorized evidence| LLM[Optional Groq-compatible API]
+  LLM --> API

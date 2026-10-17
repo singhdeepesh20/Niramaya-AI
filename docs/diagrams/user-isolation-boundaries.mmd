@@ -1,0 +1,11 @@
+flowchart TB
+  JWT[Verified JWT] --> User[DB-resolved active user UUID]
+  User --> SQL[Explicit SQL owner filters]
+  User --> RLS[Transaction-local RLS context]
+  User --> VectorFilter[Server-built Qdrant user_id filter]
+  VectorFilter --> IDs[Untrusted candidate chunk IDs]
+  IDs --> SQLRecheck[PostgreSQL owner + document + generation recheck]
+  SQLRecheck --> Evidence[Only authorized text becomes evidence]
+  Evidence --> Model[Optional LLM]
+  Client[Client body] -. user_id is forbidden/ignored as identity .-> User
+  Model -. cannot set identity or permissions .-> User

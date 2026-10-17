@@ -1,0 +1,13 @@
+flowchart TB
+  Internet --> TLS[Deployment TLS ingress]
+  TLS --> Web[Next.js frontend process]
+  Web --> API[FastAPI process]
+  API --> DB[(PostgreSQL)]
+  API --> S3[(Private S3)]
+  Worker[Separately supervised worker process] --> DB
+  Worker --> S3
+  Worker --> LocalModel[Provisioned local embedding/OCR dependencies]
+  API --> Qdrant[(Optional Qdrant)]
+  Worker --> Qdrant
+  API --> LLM[Optional external compatible LLM]
+  CI[GitHub Actions checks] -. validation only; no deploy .-> API

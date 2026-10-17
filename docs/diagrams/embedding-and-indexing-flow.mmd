@@ -1,0 +1,10 @@
+flowchart LR
+  Pages[Current-generation page text] --> Enrich[Append table rows and entity provenance]
+  Enrich --> Split[Page-local bounded chunks]
+  Split --> Hash[Stable UUIDv5 + SHA-256 content hash]
+  Hash --> PG[(Persist canonical chunk text in PostgreSQL)]
+  Split --> Embed[Local normalized sentence-transformer vectors]
+  Embed --> Check{Collection dimension compatible?}
+  Check -->|Yes| Upsert[Qdrant upsert with owner/doc/generation metadata]
+  Check -->|No / unavailable| Failed[Record index failure; keep PG chunks]
+  Upsert --> Cleanup[Delete obsolete same-owner/document points]

@@ -424,7 +424,7 @@ The project's engineering documentation covers:
 - Configuration, deployment, troubleshooting, and testing.
 - Operational runbooks and known limitations.
 
-Refer to the project's `docs/` directory for detailed implementation and operational guidance.
+Refer to the project's [Engineering Manual](docs/index.md) and [`docs/`](docs/) directory for detailed implementation and operational guidance, including [System Architecture](docs/03-system-architecture.md), [Security & Privacy](docs/21-security-and-privacy.md), and [API Reference](docs/08-api-reference.md).
 
 ## ⚕️ Medical Disclaimer
 

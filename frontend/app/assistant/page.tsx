@@ -146,7 +146,23 @@ export default function AssistantPage() {
       setQuestion("");
       input.current?.focus();
       // The backend persists each question and answer; refresh from that source for its ID and timestamp.
-      try { setEntries((await healthApi.history(token)).map(historyEntry)); }
+      try {
+        const previousHistoryIds = new Set(entries.filter((item) => !item.id.startsWith("reply-")).map((item) => item.id));
+        const persisted = (await healthApi.history(token)).map(historyEntry);
+        const savedReply = persisted.find((item) =>
+          !previousHistoryIds.has(item.id) && item.question === entry.question && item.answer === entry.answer,
+        );
+        if (savedReply) {
+          const currentById = new Map(entries.map((item) => [item.id, item]));
+          currentById.set(savedReply.id, entry);
+          setEntries(persisted.map((item) => ({
+            ...item,
+            // History stores citations but not excerpts. Keep evidence returned by this live response
+            // in page memory instead of discarding it when the history refresh finishes.
+            evidence: currentById.get(item.id)?.evidence ?? [],
+          })));
+        }
+      }
       catch (cause) {
         if (cause instanceof ApiError && cause.status === 401) clearSession(router);
         // Keep the successful response visible if history refresh is temporarily unavailable.

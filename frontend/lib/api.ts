@@ -22,14 +22,25 @@ export class ApiError extends Error {
   }
 }
 
+export function getCsrfToken(): string | null {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp("(^|;\\s*)niramaya_csrf_token=([^;]+)"));
+  return match ? decodeURIComponent(match[2]) : null;
+}
+
 async function request<T>(path: string, body: unknown): Promise<T> {
+  const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
+  const csrf = getCsrfToken();
+  if (csrf) headers["X-CSRF-Token"] = csrf;
+
   let response: Response;
   try {
     response = await fetch(`${API_BASE}${path}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers,
       body: JSON.stringify(body),
       signal: requestTimeoutSignal(),
+      credentials: "include",
     });
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === "TimeoutError") {
@@ -57,11 +68,15 @@ async function request<T>(path: string, body: unknown): Promise<T> {
 
 async function authenticatedGet<T>(path: string, token: string): Promise<T> {
   let response: Response;
+  const headers: Record<string, string> = { Accept: "application/json" };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+
   try {
     response = await fetch(`${API_BASE}${path}`, {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      headers,
       signal: requestTimeoutSignal(),
       cache: "no-store",
+      credentials: "include",
     });
   } catch (cause) {
     if (cause instanceof DOMException && cause.name === "TimeoutError") {
@@ -83,12 +98,18 @@ async function authenticatedGet<T>(path: string, token: string): Promise<T> {
 
 async function authenticatedRequest<T>(path: string, token: string, init: RequestInit = {}, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
   let response: Response;
+  const headers: Record<string, string> = { Accept: "application/json", ...init.headers as Record<string, string> };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const csrf = getCsrfToken();
+  if (csrf) headers["X-CSRF-Token"] = csrf;
+
   try {
     response = await fetch(`${API_BASE}${path}`, {
       ...init,
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}`, ...init.headers },
+      headers,
       signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
+      credentials: "include",
     });
   } catch {
     throw new ApiError("Could not reach Niramaya-AI. Check that the API server is running and try again.", 0);
@@ -162,8 +183,11 @@ function uploadDocument(token: string, file: File, documentType: string, onProgr
     data.append("document_type", documentType);
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE}/api/v1/documents/upload`);
+    xhr.withCredentials = true;
     xhr.timeout = 120_000;
-    xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+    const csrf = getCsrfToken();
+    if (csrf) xhr.setRequestHeader("X-CSRF-Token", csrf);
     xhr.responseType = "json";
     xhr.upload.onprogress = (event) => { if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100)); };
     xhr.onerror = () => reject(new ApiError("Could not reach Niramaya-AI. Check that the API server is running and try again.", 0));
@@ -179,11 +203,13 @@ function uploadDocument(token: string, file: File, documentType: string, onProgr
 export type RegisterInput = { username: string; email: string; password: string };
 export type LoginInput = { username: string; password: string };
 export type User = { id: string; username: string; email: string; is_active: boolean };
-export type TokenResponse = { access_token: string; token_type: "bearer"; expires_in: number };
+export type TokenResponse = { access_token: string; token_type: "bearer"; expires_in: number; csrf_token?: string };
 
 export const authApi = {
   register: (input: RegisterInput) => request<User>("/api/v1/users/register", input),
   login: (input: LoginInput) => request<TokenResponse>("/api/v1/users/login", input),
+  logout: () => authenticatedRequest<{ message: string }>("/api/v1/users/logout", "", { method: "POST" }),
+  csrf: () => authenticatedGet<{ csrf_token: string }>("/api/v1/users/csrf", ""),
   me: (token: string) => authenticatedGet<User>("/api/v1/users/me", token),
 };
 

@@ -35,10 +35,10 @@ The upload transaction records the document, a state event, and an outbox job. W
 6. Each finding stores page, source line, rule version, extraction method, warnings, and a heuristic parsing-quality score.
 7. Review evaluation records unresolved conditions. Scores are not probabilities, clinical confidence, or a diagnosis.
 
-Unsupported pages, ambiguous documents, encrypted/corrupt/oversized PDFs, unavailable OCR for scan-only pages, and configured vector indexing requirements prevent a false `completed` state. No embedding or vector index is currently configured by this local processor.
+Unsupported pages, ambiguous documents, encrypted/corrupt/oversized PDFs, and unavailable OCR for scan-only pages can require review or fail processing. Vector indexing runs as a separate stage after extraction; `HEALTH_VECTOR_INDEX_REQUIRED` affects the adapter worker's required-stage contract. In the built-in deterministic worker, extraction status and indexing status remain separate. If Qdrant is configured, the worker chunks, embeds, indexes and stores PostgreSQL chunk text; embedding/vector failure records a failed indexing state while preserving chunks for lexical search. See [chunking and embeddings](../16-chunking-and-embeddings.md) and [recovery](../operations/reindexing-and-recovery.md).
 
 ## Limits and operation
 
-`DOCUMENT_MAX_PAGES`, `DOCUMENT_MAX_TEXT_CHARS`, `S3_MAX_UPLOAD_BYTES`, and the `OCR_*` settings bound work. OCR is opt-in operationally through local Tesseract availability; configure `TESSERACT_CMD` if it is outside PATH. Processing is offline and has no model-provider configuration. See the [runbook](../operations/document-processing-runbook.md).
+`DOCUMENT_MAX_PAGES`, `DOCUMENT_MAX_TEXT_CHARS`, `S3_MAX_UPLOAD_BYTES`, and the `OCR_*` settings bound work. OCR is opt-in operationally through local Tesseract availability; configure `TESSERACT_CMD` if it is outside PATH. The extraction/parser stage is local and does not use a model provider; the subsequent indexing stage can use local model weights and external Qdrant when configured. See the [runbook](../operations/document-processing-runbook.md).
 
 On macOS, install the local OCR executable with `brew install tesseract`; install the desired trained language data on the host and set `OCR_LANGUAGE` accordingly. On Linux, install the distribution's `tesseract-ocr` package and language pack (for example, English). Keep OCR disabled or accept a review outcome when those system packages are unavailable.

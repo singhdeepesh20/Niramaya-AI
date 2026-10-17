@@ -1,6 +1,6 @@
 "use client";
 
-import { ApiError } from "@/lib/api";
+import { ApiError, authApi } from "@/lib/api";
 
 type Router = { replace: (href: string) => void };
 
@@ -13,6 +13,8 @@ export function readAccessToken(): string | null {
 export function clearSession(router?: Router): void {
   sessionStorage.removeItem(TOKEN_KEY);
   sessionStorage.removeItem("niramaya_registered");
+  sessionStorage.removeItem("niramaya_user_cache");
+  authApi.logout().catch(() => {});
   if (router) router.replace("/login");
 }
 

@@ -2,6 +2,31 @@
 
 Deployment is environment-specific. CI passing does not prove that PostgreSQL, S3, Qdrant, the embedding model, or Groq is reachable. Keep a dated verification record for each environment and mark any service that was not actually exercised as blocked or unverified.
 
+## Container builds
+
+Build the API and worker image from the repository root:
+
+```bash
+docker build -f Dockerfile.api -t niramaya-ai-api:local .
+docker run --rm --env-file .env -p 8000:8000 niramaya-ai-api:local
+```
+
+Run the durable worker as a separate process using the same image. Disable the API-only HTTP health check for this worker command and monitor its persisted job progress through the deployment platform:
+
+```bash
+docker run --rm --no-healthcheck --env-file .env niramaya-ai-api:local python -m app.documents.worker
+```
+
+Build the Next.js standalone image from `frontend/`. The API base URL is public browser configuration and is embedded at build time; never pass credentials through build arguments:
+
+```bash
+cd frontend
+docker build --build-arg NEXT_PUBLIC_API_BASE_URL=https://api.example.com -t niramaya-ai-web:local .
+docker run --rm -p 3000:3000 niramaya-ai-web:local
+```
+
+The images use versioned Python 3.12 and Node 20 Bookworm tags, non-root runtime users, hash-checked Python dependencies and npm lockfile installation. Base image tags and OS package repositories remain mutable; builds are not byte-for-byte reproducible. Docker build and container health checks must be run in a Docker-enabled environment before release. Migrations remain an explicit operator-controlled deployment step and are not run by the API container at startup.
+
 ## Configuration and secret delivery
 
 - Provide settings from a secret manager or protected process environment. Never bake `.env`, API keys, database passwords, or JWT signing keys into an image, frontend bundle, GitHub Actions artifact, or source repository.

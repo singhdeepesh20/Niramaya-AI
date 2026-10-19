@@ -271,8 +271,8 @@ FastAPI's interactive documentation is the best place to verify the exact routes
 
 ### Prerequisites
 
-- Python 3.12+
-- Node.js 20+
+- Python 3.12
+- Node.js 20
 - PostgreSQL
 - Optional Tesseract OCR installation
 - Optional S3, Qdrant, and LLM provider configuration
@@ -290,10 +290,9 @@ cd Niramaya-AI
 python -m venv .venv
 source .venv/bin/activate
 
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements-dev.txt
 
-cp .env.example .env
+if [ ! -f .env ]; then cp .env.example .env; fi
 ```
 
 Configure your local `.env` file with the PostgreSQL connection URL and a strong, randomly generated JWT signing secret.

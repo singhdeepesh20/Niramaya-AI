@@ -2,8 +2,8 @@
 
 ## Prerequisites
 
-- Python 3.12 or newer
-- Node.js 20 or newer and npm
+- Python 3.12 (see `.python-version`)
+- Node.js 20 and npm (see `frontend/.nvmrc`)
 - PostgreSQL for a complete local API workflow
 - Tesseract and English language data for OCR of scan-only pages (optional for text PDFs)
 
@@ -16,7 +16,7 @@ From the repository root:
 ```bash
 python3.12 -m venv .venv
 source .venv/bin/activate
-python -m pip install -r requirements.txt
+python -m pip install --require-hashes -r requirements-dev.txt
 ```
 
 Create `.env` from `.env.example` only if it does not already exist; otherwise merge the required settings without replacing your local values. Configure `DATABASE_URL` for your local development database and set a unique JWT secret generated with `openssl rand -hex 32`. Keep all credentials in the ignored `.env` file or a secret manager.
@@ -78,6 +78,7 @@ Run from the repository root:
 ```bash
 python -m compileall -q app tests
 python -m pytest -q
+ruff check app tests
 ```
 
 Run from `frontend/`:
@@ -87,9 +88,15 @@ npm ci
 npm run lint
 npx tsc --noEmit --incremental false
 npm run build
+npm audit --omit=dev
+npm audit
 ```
 
 Backend tests use temporary SQLite databases, synthetic documents, and test doubles. They do not verify live AWS, PostgreSQL RLS, Qdrant, model downloads, or Groq access. Keep cloud credentials out of ordinary tests and CI.
+
+For production-only installs, use `python -m pip install --require-hashes -r requirements.txt`. Development installs include tests, lint and audits with `requirements-dev.txt`. The lockfiles resolve Python 3.12 dependencies across supported platforms. Install `uv` as a lock-generation tool, then update the range inputs in `requirements.in` or `requirements-dev.in` and regenerate the matching lock with `uv pip compile --universal --python-version 3.12 --generate-hashes requirements.in -o requirements.txt` or `uv pip compile --universal --python-version 3.12 --generate-hashes requirements-dev.in -o requirements-dev.txt`. Review the complete lock diff and rerun tests before merging.
+
+The 2026-10-19 dependency audit found an unresolved high-severity advisory for `braces` through the frontend ESLint/Next.js tooling dependency chain. The advisory lists no patched upstream release, and the affected package is development tooling rather than a production dependency. Do not suppress the finding or force a breaking Next.js downgrade; monitor Dependabot and update once upstream publishes a fix. The PostCSS issue in the production dependency graph is constrained to the published patched floor by the npm override.
 
 ## Troubleshooting
 

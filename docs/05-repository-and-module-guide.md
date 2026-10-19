@@ -24,4 +24,4 @@
 | `docs/` | Architecture, security, AI, data-processing, operations and verification references |
 | `.github/workflows/` | CI checks only; no deploy job |
 
-The configured runtime is Python 3.12+ per project setup, Node 20 in CI, Next.js 15, React 19 and TypeScript. Dependency bounds are in `requirements.txt`; JavaScript dependency versions are recorded in `frontend/package-lock.json`.
+The configured runtimes are Python 3.12 and Node 20, Next.js 15, React 19 and TypeScript. Runtime dependency ranges are in `requirements.in` with universal hashed pins in `requirements.txt`; development tools have a separate `requirements-dev.txt` hash lock. JavaScript dependency versions are recorded in `frontend/package-lock.json`.

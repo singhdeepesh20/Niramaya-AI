@@ -5,8 +5,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.errors import APIError
-from app.core.rate_limit import LoginRateLimiter
 from app.database import get_db
 from app.health.assistant import HealthAssistant
 from app.health.dtos import ChatHistoryItem, Citation, EvidenceItem, HealthAnswer, HealthQuestion

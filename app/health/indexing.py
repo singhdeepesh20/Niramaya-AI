@@ -11,7 +11,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
-from app.health.chunking import CHUNKING_VERSION, chunk_pages
+from app.health.chunking import chunk_pages
 from app.health.embeddings import EmbeddingUnavailable, embed_texts
 from app.health.models import DocumentExtractedTable, DocumentPage, MedicalChunk, MedicalDocument, MedicalEntity
 from app.health.repository import set_tenant_context

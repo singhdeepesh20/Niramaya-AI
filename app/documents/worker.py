@@ -11,13 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.core.config import settings
 from app.database import AsyncSessionLocal
 from app.documents.cleanup import cleanup_document_objects
-from app.documents.models import DocumentProcessingJob, DocumentStageRun
+from app.documents.models import DocumentProcessingJob
 from app.documents.extraction import PDFProcessingError
 from app.documents.pipeline import DeterministicDocumentProcessor
 from app.documents.processing import (
     ProcessingStage, ProcessingState, RetryableProcessingError,
     PermanentProcessingError, ReviewRequiredError, StageProcessor, StageStatus,
-    UnconfiguredStageProcessor, record_stage,
+    record_stage,
     required_stages, retry_available_at, transition_document,
 )
 from app.health.models import DocumentExtractedTable, DocumentPage, MedicalDocument, MedicalEntity

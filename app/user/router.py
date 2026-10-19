@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.csrf import generate_csrf_token
-from app.core.rate_limit import LoginRateLimiter
 from app.database import get_db
 from app.user.controller import get_current_user, login_user, logout_user, register_user
 from app.user.dtos import CSRFResponse, LoginRequest, RegistrationRequest, TokenResponse, UserPublic

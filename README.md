@@ -221,7 +221,7 @@ Niramaya-AI applies the following design principles:
 - Rate limiting is process-local and is not shared across API replicas.
 - PostgreSQL RLS and migration behavior require live verification using the intended least-privilege database role.
 - Automated tests do not establish live AWS, Qdrant, LLM, or OCR infrastructure readiness.
-- Production monitoring, backup/restore automation, and complete account-wide data erasure are not included in the current implementation.
+- Local Compose, production container targets, and CI migration/image build validation are included; cloud deployment, production monitoring, backup/restore automation, and account-wide erasure are not implemented.
 
 These limitations must be addressed according to the intended deployment's security and privacy requirements.
 
@@ -378,14 +378,14 @@ Niramaya-AI is an engineering prototype, and its capabilities have defined bound
 - No separate learned reranker is currently included.
 - Evidence-constrained LLM generation does not guarantee medical correctness.
 - The implementation is not clinically validated.
-- Production infrastructure automation, monitoring, backup/restore automation, and full account-wide erasure are not included.
+- Local integration containers and CI migration/image builds are included. Production infrastructure automation, monitoring, verified backup/restore, and full account-wide erasure are not included.
 - Browser end-to-end tests and independent security validation remain outstanding.
 
 ## 🗺️ Roadmap
 
 The following are proposed improvements, not claims of existing functionality.
 
-- [ ] Add PostgreSQL migration and RLS integration tests with a least-privilege runtime role.
+- [ ] Add PostgreSQL RLS integration tests with a least-privilege runtime role.
 - [ ] Add opt-in integration tests using isolated S3 and Qdrant resources.
 - [ ] Introduce browser end-to-end and accessibility testing.
 - [ ] Add distributed rate limiting.
@@ -394,7 +394,7 @@ The following are proposed improvements, not claims of existing functionality.
 - [ ] Define backup, recovery, retention, and data-export policies.
 - [ ] Add production metrics, monitoring, and alerting.
 - [ ] Pin reviewed embedding model revisions and document reindexing procedures.
-- [ ] Add dependency and secret scanning.
+- [ ] Add image provenance/SBOM and secret scanning.
 - [ ] Establish production deployment automation after security and operational requirements are defined.
 
 ## 🤝 Contributing

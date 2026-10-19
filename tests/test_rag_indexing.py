@@ -15,7 +15,7 @@ from app.health.vector_store import QdrantStore, VectorStoreError
 from app.health.dtos import HealthQuestion
 from app.health.repository import retrieve_authorized_chunks
 from app.database import Base
-from app.documents import models as _document_models  # register queue tables
+from app.documents import models as _document_models  # noqa: F401 - register queue tables
 from app.health.models import DocumentPage, MedicalChunk, MedicalDocument
 from app.user.models import User
 

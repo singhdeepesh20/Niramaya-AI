@@ -1,8 +1,7 @@
 import asyncio
 from datetime import date
-from uuid import UUID, uuid4
+from uuid import UUID
 
-from sqlalchemy import select
 from pydantic import SecretStr
 import httpx
 import pytest
@@ -14,7 +13,6 @@ from app.health.models import HealthChatMessage, MedicalChunk, MedicalDocument, 
 from app.health.repository import qdrant_filter
 from app.health.router import get_health_assistant
 from app.core.errors import APIError
-from app.user.models import User
 
 
 class FakeAssistant:

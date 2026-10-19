@@ -1,12 +1,6 @@
-import asyncio
-from datetime import date
-from uuid import uuid4
-
-import pytest
 from starlette.testclient import TestClient
 
 from app.core.config import settings
-from app.health.models import MedicalDocument
 from app.storage.s3 import S3StorageError, get_s3_storage
 
 
@@ -219,7 +213,6 @@ def test_two_user_complete_idor_matrix(client: TestClient):
     _register(client, "alice_idor")
     res_a = client.post("/api/v1/users/login", json={"username": "alice_idor", "password": "VeryStrongPassword-123!"})
     token_a = res_a.json()["access_token"]
-    user_a_id = res_a.cookies.get(settings.COOKIE_NAME)  # token or header
 
     _register(client, "bob_idor")
     res_b = client.post("/api/v1/users/login", json={"username": "bob_idor", "password": "VeryStrongPassword-123!"})

@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import select, update
 
 from app.documents.models import DocumentProcessingEvent, DocumentProcessingJob, DocumentStageRun
-from app.documents.processing import InvalidTransition, MANDATORY_STAGES, ProcessingStage, ProcessingState, RetryableProcessingError, StageStatus, record_stage, retry_delay, transition_document
+from app.documents.processing import InvalidTransition, MANDATORY_STAGES, ProcessingState, RetryableProcessingError, StageStatus, record_stage, retry_delay, transition_document
 from app.documents.worker import process_one, recover_stale_jobs
 from app.health.models import MedicalDocument
 from test_documents_api import FakeStorage, create_user

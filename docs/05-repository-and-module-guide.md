@@ -22,6 +22,8 @@
 | `frontend/lib/api.ts` | Typed browser API client, timeout/error mapping and upload progress |
 | `frontend/lib/session.ts` | `sessionStorage` token read/clear and 401 handling |
 | `docs/` | Architecture, security, AI, data-processing, operations and verification references |
-| `.github/workflows/` | CI checks only; no deploy job |
+| `Dockerfile.api`, `frontend/Dockerfile`, `compose.yaml` | Separate API/worker targets, frontend production container, local-only integration stack |
+| `.github/workflows/` | CI, disposable PostgreSQL migration validation, and image builds; no deploy job |
+| `scripts/verify_migration_schema.py` | Read-only check of migrated tables, indexes, forced tenant RLS, and expected head |
 
-The configured runtimes are Python 3.12 and Node 20, Next.js 15, React 19 and TypeScript. Runtime dependency ranges are in `requirements.in` with universal hashed pins in `requirements.txt`; development tools have a separate `requirements-dev.txt` hash lock. JavaScript dependency versions are recorded in `frontend/package-lock.json`.
+The configured runtimes are Python 3.12 and Node 24.21.0, Next.js 15, React 19 and TypeScript. Runtime dependency ranges are in `requirements.in` with universal hashed pins in `requirements.txt`; development tools have a separate `requirements-dev.txt` hash lock. JavaScript dependency versions are recorded in `frontend/package-lock.json`.

@@ -12,7 +12,7 @@ This documentation describes the repository as inspected on 2026-10-15. It disti
 | Medical-data engineer | [Processing pipeline](13-document-processing-pipeline.md), [extraction rules](14-medical-data-extraction-rules.md), [state machine](15-document-state-machine.md) |
 | Retrieval/ML engineer | [Chunking and embeddings](16-chunking-and-embeddings.md), [Qdrant](17-qdrant-vector-database.md), [RAG](18-rag-retrieval-and-generation.md) |
 | Security/reviewer | [Security and privacy](21-security-and-privacy.md), [threat model](35-threat-model.md), [verification matrix](reference/verification-matrix.md) |
-| Operator | [Deployment](deployment.md), [operational runbooks](36-operational-runbooks.md), [limitations](32-known-limitations-and-roadmap.md) |
+| Operator | [Deployment](deployment.md), [release checklist](release-checklist.md), [operational runbooks](36-operational-runbooks.md), [limitations](32-known-limitations-and-roadmap.md) |
 
 ## Documentation map
 
@@ -25,7 +25,7 @@ This documentation describes the repository as inspected on 2026-10-15. It disti
 7. [Chunking and embeddings](16-chunking-and-embeddings.md), [Qdrant](17-qdrant-vector-database.md), [retrieval and generation](18-rag-retrieval-and-generation.md), [AI integrations](19-ai-models-and-integrations.md)
 8. [Business rules](20-business-rules-and-validation.md), [security](21-security-and-privacy.md), [errors and retries](22-error-handling-and-retries.md), [observability](23-logging-monitoring-and-health.md)
 9. [Testing](24-testing-strategy.md), [development](development.md), [configuration](reference/configuration-reference.md), [deployment](deployment.md), [CI](28-ci-cd-and-github-workflows.md)
-10. [Troubleshooting](29-troubleshooting-runbooks.md), [performance](30-performance-and-scalability.md), [backup/deletion](31-backup-recovery-and-deletion.md), [limitations](32-known-limitations-and-roadmap.md), [glossary](33-glossary.md)
+10. [Troubleshooting](29-troubleshooting-runbooks.md), [performance](30-performance-and-scalability.md), [backup/deletion](31-backup-recovery-and-deletion.md), [release checklist](release-checklist.md), [limitations](32-known-limitations-and-roadmap.md), [glossary](33-glossary.md)
 11. [Data-flow catalogue](34-data-flow-catalog.md), [threat model](35-threat-model.md), [runbooks](36-operational-runbooks.md)
 
 ## Existing focused references

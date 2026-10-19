@@ -32,3 +32,5 @@ jobs:
         run: npx tsc --noEmit --incremental false
       - name: Build
         run: npm run build
+      - name: Build production container
+        run: docker build -f Dockerfile --build-arg NEXT_PUBLIC_API_BASE_URL=http://localhost:8000 -t niramaya-frontend:ci .

@@ -124,7 +124,7 @@ async def upload_document(
     user_id = user.id
     filename, content_type, file_size = await _validate_upload(file)
     document_id = uuid4()
-    object_key = f"users/{user_id}/documents/{document_id}"
+    object_key = storage.qualify_key(f"users/{user_id}/documents/{document_id}")
     # Do not hold a database transaction open during S3 network I/O.
     await db.rollback()
     try:

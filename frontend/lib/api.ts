@@ -1,4 +1,8 @@
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000").replace(/\/$/, "");
+const configuredApiBase = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+if (!configuredApiBase && process.env.NODE_ENV === "production") {
+  throw new Error("NEXT_PUBLIC_API_BASE_URL must be configured for production builds.");
+}
+const API_BASE = (configuredApiBase || "http://localhost:8000").replace(/\/$/, "");
 const REQUEST_TIMEOUT_MS = 15_000;
 
 function requestTimeoutSignal(): AbortSignal {

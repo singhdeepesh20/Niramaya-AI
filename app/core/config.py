@@ -71,8 +71,15 @@ class Settings(BaseSettings):
     @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, value: str) -> str:
-        if not value.strip():
+        value = value.strip()
+        if not value:
             raise ValueError("DATABASE_URL must not be empty")
+        # Managed Postgres providers commonly expose a libpq-style URL. Convert
+        # it to the installed async-capable psycopg SQLAlchemy dialect.
+        if value.startswith("postgres://"):
+            value = "postgresql+psycopg://" + value.removeprefix("postgres://")
+        elif value.startswith("postgresql://"):
+            value = "postgresql+psycopg://" + value.removeprefix("postgresql://")
         if not value.startswith(("postgresql+asyncpg://", "postgresql+psycopg://", "sqlite+aiosqlite://")):
             raise ValueError("DATABASE_URL must use an async PostgreSQL driver or sqlite+aiosqlite")
         return value

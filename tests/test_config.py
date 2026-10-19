@@ -23,6 +23,19 @@ def test_settings_reject_weak_jwt_secret():
         settings(JWT_SECRET_KEY="short")
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "postgres://user:password@db.example.com/app",
+        "postgresql://user:password@db.example.com/app",
+    ],
+)
+def test_settings_normalize_managed_postgres_urls(url):
+    assert settings(DATABASE_URL=url).DATABASE_URL == url.replace(
+        "postgres://", "postgresql+psycopg://", 1
+    ).replace("postgresql://", "postgresql+psycopg://", 1)
+
+
 def test_settings_reject_unsupported_jwt_algorithm():
     with pytest.raises(ValidationError):
         settings(JWT_ALGORITHM="none")

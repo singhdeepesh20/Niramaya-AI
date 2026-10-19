@@ -4,7 +4,7 @@ Source of truth: `app/core/config.py`; frontend reads only `NEXT_PUBLIC_API_BASE
 
 | Variable | Required/default | Purpose / validation | Classification / failure |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | Required | Must use `postgresql+asyncpg`, `postgresql+psycopg`, or `sqlite+aiosqlite` scheme. | Secret; empty/unsupported fails settings construction. |
+| `DATABASE_URL` | Required | Accepts `postgres://` and `postgresql://` managed-provider URLs and normalizes them to `postgresql+psycopg`; also accepts `postgresql+asyncpg`, `postgresql+psycopg`, or `sqlite+aiosqlite`. | Secret; empty/unsupported fails settings construction. |
 | `JWT_SECRET_KEY` | Required | At least 32 UTF-8 bytes, enough character diversity; rejects common replacement markers. | Secret; weak value fails startup. |
 | `JWT_ALGORITHM` | `HS256` only | Literal setting; decoder pins the configured algorithm. | Security setting; other values fail validation. |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | 30; 1–1440 | Access-token lifetime. | Security setting; out of range fails. |

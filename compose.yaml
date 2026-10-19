@@ -1,0 +1,84 @@
+name: niramaya-ai-local
+
+# Local development only. This stack uses synthetic data and fixed, local-only
+# credentials. It does not load the repository .env or configure cloud services.
+services:
+  postgres:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: niramaya_dev
+      POSTGRES_USER: niramaya_bootstrap
+      POSTGRES_PASSWORD: niramaya_bootstrap_only
+    ports:
+      - "5433:5432"
+    volumes:
+      - niramaya_local_pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init-local-roles.sql:/docker-entrypoint-initdb.d/10-local-roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U niramaya_bootstrap -d niramaya_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: runtime-base
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+psycopg://niramaya_migrator:niramaya_migrator_only@postgres:5432/niramaya_dev
+      JWT_SECRET_KEY: local-compose-only-not-for-deployment-0123456789abcdef
+      JWT_ALGORITHM: HS256
+      FRONTEND_ORIGINS: '["http://localhost:3000"]'
+      EMBEDDING_ALLOW_DOWNLOAD: "false"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: runtime
+    environment: &backend_environment
+      DATABASE_URL: postgresql+psycopg://niramaya_runtime:niramaya_runtime_only@postgres:5432/niramaya_dev
+      JWT_SECRET_KEY: local-compose-only-not-for-deployment-0123456789abcdef
+      JWT_ALGORITHM: HS256
+      FRONTEND_ORIGINS: '["http://localhost:3000"]'
+      EMBEDDING_ALLOW_DOWNLOAD: "false"
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+      target: worker
+    environment: *backend_environment
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    restart: unless-stopped
+    stop_grace_period: 5m
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  niramaya_local_pgdata:

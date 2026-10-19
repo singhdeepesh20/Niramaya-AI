@@ -9,7 +9,7 @@ from sqlalchemy import select, update
 
 from app.documents.models import DocumentProcessingEvent, DocumentProcessingJob, DocumentStageRun
 from app.documents.processing import InvalidTransition, MANDATORY_STAGES, ProcessingState, RetryableProcessingError, StageStatus, record_stage, retry_delay, transition_document
-from app.documents.worker import process_one, recover_stale_jobs
+from app.documents.worker import process_one, recover_stale_jobs, run_worker
 from app.health.models import MedicalDocument
 from test_documents_api import FakeStorage, create_user
 from app.storage.s3 import get_s3_storage
@@ -23,6 +23,12 @@ def synthetic_pdf(text="CBC\nHemoglobin 13.5 g/dL 12-16\nWBC 7.2 10^9/L"):
     payload = pdf.tobytes()
     pdf.close()
     return payload
+
+
+def test_worker_exits_when_shutdown_is_requested():
+    stop_event = asyncio.Event()
+    stop_event.set()
+    asyncio.run(run_worker(stop_event=stop_event))
 
 
 def test_upload_outbox_and_safe_unconfigured_worker(client):

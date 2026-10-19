@@ -1,6 +1,7 @@
 """Queue-compatible worker entry points; extraction adapters are injected by deployment."""
 import asyncio
 import logging
+import signal
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -9,7 +10,7 @@ from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.core.config import settings
-from app.database import AsyncSessionLocal
+from app.database import AsyncSessionLocal, engine
 from app.documents.cleanup import cleanup_document_objects
 from app.documents.models import DocumentProcessingJob
 from app.documents.extraction import PDFProcessingError
@@ -485,17 +486,24 @@ async def recover_stale_jobs(sessions: async_sessionmaker[AsyncSession], *, work
     return recovered
 
 
-async def run_worker(*, worker_id: str = "document-worker", poll_seconds: float = 2.0) -> None:
+async def run_worker(
+    *, worker_id: str = "document-worker", poll_seconds: float = 2.0,
+    stop_event: asyncio.Event | None = None,
+) -> None:
     """Minimal standalone polling worker; deployments inject real adapters in their runner."""
+    stop_event = stop_event or asyncio.Event()
     last_recovery = 0.0
-    while True:
+    while not stop_event.is_set():
         try:
             if asyncio.get_running_loop().time() - last_recovery >= 30:
                 await recover_stale_jobs(AsyncSessionLocal, worker_id=f"{worker_id}-recovery")
                 last_recovery = asyncio.get_running_loop().time()
             worked = await process_one(AsyncSessionLocal, worker_id=worker_id)
             if not worked:
-                await asyncio.sleep(poll_seconds)
+                try:
+                    await asyncio.wait_for(stop_event.wait(), timeout=poll_seconds)
+                except TimeoutError:
+                    pass
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -506,8 +514,23 @@ async def run_worker(*, worker_id: str = "document-worker", poll_seconds: float 
             logging.getLogger("niramaya.documents.worker").error(
                 "document_worker_iteration_failed error_type=%s", type(error).__name__
             )
-            await asyncio.sleep(poll_seconds)
+            try:
+                await asyncio.wait_for(stop_event.wait(), timeout=poll_seconds)
+            except TimeoutError:
+                pass
+
+
+async def _run_standalone_worker() -> None:
+    """Convert container stop signals to a clean loop exit and dispose DB resources."""
+    loop = asyncio.get_running_loop()
+    stop_event = asyncio.Event()
+    loop.add_signal_handler(signal.SIGTERM, stop_event.set)
+    loop.add_signal_handler(signal.SIGINT, stop_event.set)
+    try:
+        await run_worker(stop_event=stop_event)
+    finally:
+        await engine.dispose()
 
 
 if __name__ == "__main__":
-    asyncio.run(run_worker())
+    asyncio.run(_run_standalone_worker())

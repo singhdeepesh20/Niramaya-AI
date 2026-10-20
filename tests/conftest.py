@@ -22,6 +22,7 @@ for setting_name in (
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
     "AWS_SESSION_TOKEN",
+    "S3_KEY_PREFIX",
     "QDRANT_URL",
     "QDRANT_API_KEY",
     "LLM_API_KEY",

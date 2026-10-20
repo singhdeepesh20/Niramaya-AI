@@ -8,6 +8,9 @@ class FakeIsolatedStorage:
     def __init__(self):
         self.objects: dict[str, bytes] = {}
 
+    def qualify_key(self, key):
+        return key
+
     def credential_source(self):
         return "test_mock"
 

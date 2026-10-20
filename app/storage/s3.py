@@ -36,6 +36,27 @@ class S3Storage:
             raise S3StorageError("bucket_not_configured", "S3 bucket is not configured.")
         return self.config.S3_BUCKET_NAME
 
+    def qualify_key(self, key: str) -> str:
+        """Place a new logical key inside the configured namespace."""
+        key = key.strip("/")
+        if not key or "\\" in key or any(part in {"", ".", ".."} for part in key.split("/")):
+            raise S3StorageError("invalid_object_key", "The document storage key is invalid.")
+        prefix = self.config.S3_KEY_PREFIX
+        if not prefix:
+            return key
+        if key == prefix or key.startswith(f"{prefix}/"):
+            return key
+        return f"{prefix}/{key}"
+
+    def _require_scoped_key(self, key: str) -> str:
+        """Reject reads, deletes, or URLs outside the configured prefix."""
+        if not key or "\\" in key or key.startswith("/") or any(part in {"", ".", ".."} for part in key.split("/")):
+            raise S3StorageError("invalid_object_key", "The document storage key is invalid.")
+        prefix = self.config.S3_KEY_PREFIX
+        if prefix and not key.startswith(f"{prefix}/"):
+            raise S3StorageError("key_outside_prefix", "The document is outside the configured storage namespace.")
+        return key
+
     def _s3(self):
         if self._client is not None:
             return self._client
@@ -114,6 +135,7 @@ class S3Storage:
             self._raise_safe(exc, self.config.AWS_REGION)
 
     def upload_fileobj(self, source: BinaryIO, key: str, content_type: str, filename: str) -> None:
+        key = self._require_scoped_key(self.qualify_key(key))
         safe_filename = quote(filename, safe="")
         self._call(
             "upload_fileobj",
@@ -129,12 +151,15 @@ class S3Storage:
 
     def download_file(self, key: str, destination: str) -> None:
         """Download an authorized private object to a worker-owned temporary path."""
+        key = self._require_scoped_key(key)
         self._call("download_file", Bucket=self.bucket, Key=key, Filename=destination)
 
     def delete_object(self, key: str) -> None:
+        key = self._require_scoped_key(key)
         self._call("delete_object", Bucket=self.bucket, Key=key)
 
     def presigned_url(self, key: str, filename: str, content_type: str, inline: bool) -> str:
+        key = self._require_scoped_key(key)
         disposition = "inline" if inline else "attachment"
         encoded_name = quote(filename, safe="")
         try:

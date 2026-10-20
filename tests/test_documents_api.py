@@ -17,6 +17,9 @@ class FakeStorage:
         self.fail_upload = False
         self.fail_delete = False
 
+    def qualify_key(self, key):
+        return key
+
     def credential_source(self):
         return "test_mock"
 

@@ -31,7 +31,7 @@ Instead of treating medical reports as ordinary PDFs, Niramaya-AI builds a struc
 >
 > The AI assistant should explain authorized medical evidence rather than invent information about a patient's health.
 
-## 🎯 The Problem
+##  The Problem
 
 Medical information is often distributed across laboratory reports, prescriptions, imaging reports, discharge summaries, and scanned documents.
 

@@ -78,7 +78,7 @@ def test_logout_invalidates_session_cookies(client: TestClient):
         "password": "VeryStrongPassword-123!",
     })
 
-    # Verify authenticated
+    
     assert client.get("/api/v1/users/me").status_code == 200
 
     # Call logout

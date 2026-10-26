@@ -4,7 +4,8 @@ services:
   - type: web
     runtime: docker
     name: niramaya-staging-api
-    region: frankfurt
+    plan: free
+    region: oregon
     branch: main
     autoDeployTrigger: "off"
     dockerfilePath: ./Dockerfile.api
@@ -26,6 +27,8 @@ services:
         value: eu-north-1
       - key: S3_BUCKET_NAME
         sync: false
+      - key: S3_KEY_PREFIX
+        value: niramaya-staging
       - key: AWS_ACCESS_KEY_ID
         sync: false
       - key: AWS_SECRET_ACCESS_KEY
@@ -35,7 +38,7 @@ services:
       - key: QDRANT_API_KEY
         sync: false
       - key: QDRANT_COLLECTION
-        sync: false
+        value: niramayaai-staging
       - key: LLM_API_BASE_URL
         value: https://api.groq.com/openai/v1
       - key: LLM_MODEL
@@ -52,7 +55,7 @@ services:
   - type: worker
     runtime: docker
     name: niramaya-staging-worker
-    region: frankfurt
+    region: oregon
     branch: main
     autoDeployTrigger: "off"
     dockerfilePath: ./Dockerfile.api
@@ -68,6 +71,8 @@ services:
         value: eu-north-1
       - key: S3_BUCKET_NAME
         sync: false
+      - key: S3_KEY_PREFIX
+        value: niramaya-staging
       - key: AWS_ACCESS_KEY_ID
         sync: false
       - key: AWS_SECRET_ACCESS_KEY
@@ -77,7 +82,7 @@ services:
       - key: QDRANT_API_KEY
         sync: false
       - key: QDRANT_COLLECTION
-        sync: false
+        value: niramayaai-staging
       - key: EMBEDDING_ALLOW_DOWNLOAD
         value: "true"
       - key: HEALTH_VECTOR_INDEX_REQUIRED

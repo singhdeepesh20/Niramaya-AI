@@ -50,6 +50,8 @@ class Settings(BaseSettings):
     AWS_ACCESS_KEY_ID: SecretStr | None = None
     AWS_SECRET_ACCESS_KEY: SecretStr | None = None
     AWS_SESSION_TOKEN: SecretStr | None = None
+    # Empty preserves the legacy object layout; staging should use a dedicated prefix.
+    S3_KEY_PREFIX: str = ""
     S3_PRESIGNED_URL_EXPIRES_SECONDS: int = Field(default=300, ge=60, le=900)
     S3_MAX_UPLOAD_BYTES: int = Field(default=15_000_000, ge=1_000_000, le=100_000_000)
     DOCUMENT_MAX_PAGES: int = Field(default=250, ge=1, le=2000)
@@ -168,6 +170,15 @@ class Settings(BaseSettings):
         if isinstance(value, str):
             return value.strip() or None
         return value
+
+    @field_validator("S3_KEY_PREFIX")
+    @classmethod
+    def validate_s3_key_prefix(cls, value: str) -> str:
+        normalized = value.strip().strip("/")
+        parts = normalized.split("/") if normalized else []
+        if any(part in {"", ".", ".."} for part in parts) or "\\" in normalized:
+            raise ValueError("S3_KEY_PREFIX must be a safe relative object-key prefix")
+        return normalized
 
 
 @lru_cache(maxsize=1)

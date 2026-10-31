@@ -19,7 +19,7 @@
 
 ---
 
-## 🌟 About the Project
+##  About the Project
 
 **Niramaya-AI** is an AI-assisted medical document management and retrieval platform designed to transform scattered medical reports into organized, searchable health records.
 

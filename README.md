@@ -1,6 +1,6 @@
  <div align="center">
 
-# 🩺 Niramaya-AI
+#  Niramaya-AI
 
 ### From scattered medical reports to a searchable, evidence-linked health record.
 
